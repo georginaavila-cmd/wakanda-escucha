@@ -1181,6 +1181,20 @@ const URL_SILENCIO = URL.createObjectURL(crearWav([new Int16Array(5512)], 22050)
 
 // ───────────────────────── Reproductor ─────────────────────────
 const audio = $('audio');
+
+// En iPhone, usar el micrófono pone el sonido en «modo llamada»: suena más bajo y a veces sale por el
+// auricular de arriba, y se queda así hasta recargar la página. Se le indica al sistema que esta app es de
+// reproducción (como una de pódcast) y solo se pasa a micrófono mientras se dicta una nota.
+const SesionAudio = {
+  disponible: !!(navigator.audioSession && 'type' in navigator.audioSession),
+  poner(tipo) {
+    if (!this.disponible) return;
+    try { if (navigator.audioSession.type !== tipo) navigator.audioSession.type = tipo; } catch (e) {}
+  },
+  usarMicrofono() { this.poner('play-and-record'); },
+  soloReproducir() { this.poner('playback'); },
+};
+SesionAudio.soloReproducir();
 const Rep = {
   doc: null,
   frases: [],          // [{b: índice de bloque, x: texto}]
@@ -1193,6 +1207,7 @@ const Rep = {
   memoria: new Map(),  // índice → {pcm, seg}
   guardadas: new Set(),
   enCurso: new Map(),
+  reiniciarAudio: false,  // se usó el micrófono: reiniciar el reproductor antes del próximo audio
   fallidas: new Set(),  // frases que no se pudieron generar: se saltan con un silencio corto
   fallasSeguidas: 0,
   msPorLetra: local.leer('msPorLetra', 25),
@@ -1366,7 +1381,7 @@ const Rep = {
     Pantalla.activar();
     if (this.motor === 'celular') return Celular.hablar(this.i);
     // Desbloquea el audio dentro del toque (iOS) con un silencio mientras llega la voz.
-    if (this.clip && this.i >= this.clip.desde && this.i < this.clip.hasta && audio.src && !audio.ended && audio.currentTime > 0) {
+    if (!this.reiniciarAudio && this.clip && this.i >= this.clip.desde && this.i < this.clip.hasta && audio.src && !audio.ended && audio.currentTime > 0) {
       audio.play().catch(() => {});
       Sesion.estado('playing');
       return;
@@ -1374,7 +1389,17 @@ const Rep = {
     this.ponerSilencio();
     this.iniciarClip(this.i);
   },
+  // Después de usar el micrófono se reinicia el reproductor para que vuelva al parlante con el volumen normal.
+  reiniciarSiHaceFalta() {
+    if (!this.reiniciarAudio) return;
+    this.reiniciarAudio = false;
+    SesionAudio.soloReproducir();
+    audio.pause();
+    audio.removeAttribute('src');
+    audio.load();
+  },
   ponerSilencio() {
+    this.reiniciarSiHaceFalta();
     this.esperando = true;
     this.cambiando = true;
     audio.loop = true;
@@ -1403,6 +1428,7 @@ const Rep = {
       }
       const viejo = this.clip && this.clip.url;
       this.clip = { desde: k, hasta, inicios, url: URL.createObjectURL(crearWav(trozos, Motor.frecuencia)) };
+      this.reiniciarSiHaceFalta();
       this.cambiando = true;
       this.esperando = false;
       audio.loop = false;
@@ -1593,7 +1619,10 @@ const Celular = {
     UI.aviso(Motor.descargadas.size ? '' : 'Voz del celular. Para escuchar con la pantalla apagada, descarga la voz de Escucha.');
     decir(k);
   },
-  callar() { this.turno++; if (this.disponible) speechSynthesis.cancel(); },
+  callar() {
+    this.turno++;
+    if (this.disponible && (speechSynthesis.speaking || speechSynthesis.pending)) speechSynthesis.cancel();
+  },
 };
 
 // Pantalla de bloqueo y audífonos (Media Session)
@@ -1677,6 +1706,7 @@ const Pantalla = {
   },
 };
 document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && typeof Dictado !== 'undefined' && !Dictado.rec && !Dictado.grabadora) SesionAudio.soloReproducir();
   if (document.visibilityState === 'visible' && Rep.sonando) Pantalla.activar();
   if (document.visibilityState === 'visible' && Rep.preparando) { Pantalla.porPreparacion = false; Pantalla.mantenerPorPreparacion(); }
   if (document.visibilityState === 'hidden') Rep.guardarPos(true);
@@ -2533,6 +2563,8 @@ const Dictado = {
     };
     r.onerror = (e) => { this.error = e.error || 'error'; };
     r.onend = () => this.finReconocimiento(r);
+    SesionAudio.usarMicrofono();
+    Rep.reiniciarAudio = true;
     try { r.start(); } catch (e) { return this.grabar('Grabando… habla ahora. Toca el botón rojo para terminar.'); }
     this.rec = r;
     this.boton(true);
@@ -2549,6 +2581,7 @@ const Dictado = {
     clearTimeout(this.silencio);
     this.rec = null;
     this.boton(false);
+    SesionAudio.soloReproducir();
     const texto = $('dictado-texto').value.trim();
     if (this.error && !['no-speech', 'aborted'].includes(this.error) && !texto) {
       return this.grabar('No pude convertir la voz a texto aquí. Te grabo la nota en audio: habla ahora.');
@@ -2563,7 +2596,9 @@ const Dictado = {
     }
     let stream;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      SesionAudio.usarMicrofono();
+      Rep.reiniciarAudio = true;
+      stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
     } catch (e) {
       this.estado('', 'Necesito permiso para el micrófono (en el iPhone: Ajustes → Safari → Micrófono). Mientras tanto puedes escribir o dictar con el teclado.');
       return;
@@ -2577,6 +2612,7 @@ const Dictado = {
     mr.onstop = async () => {
       stream.getTracks().forEach((t) => t.stop());
       vigia();
+      SesionAudio.soloReproducir();
       clearInterval(this.reloj);
       this.grabadora = null;
       this.boton(false);
@@ -2620,6 +2656,7 @@ const Dictado = {
     this.grabadora = null;
     clearInterval(this.reloj);
     this.boton(false);
+    SesionAudio.soloReproducir();
   },
   cerrar(seguir) {
     this.detener();
