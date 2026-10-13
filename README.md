@@ -1,8 +1,8 @@
-# Wakanda Escucha
+# Escucha
 
 App web para escuchar en voz alta documentos (PDF, Word, exportaciones de Notion y texto copiado) desde el celular, también con la pantalla bloqueada.
 
-**Abrir la app:** https://georginaavila-cmd.github.io/wakanda-escucha/
+**Abrir la app:** https://georginaavila-cmd.github.io/escucha/
 
 ## Privacidad
 
@@ -16,4 +16,4 @@ Este repositorio solo contiene la app. Los documentos que abres, tu posición de
 
 ## Componentes
 
-Ver [LICENCIAS.md](LICENCIAS.md). El código fuente y las herramientas que arman este sitio están en el repositorio privado del proyecto (`wakanda-escucha/`).
+Ver [LICENCIAS.md](LICENCIAS.md). El código fuente y las herramientas que arman este sitio están en un repositorio privado.

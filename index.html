@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Wakanda Escucha</title>
+<title>Escucha</title>
 <meta name="description" content="Escucha en voz alta tus PDF, Word, páginas de Notion y textos, también con la pantalla bloqueada.">
 <meta name="theme-color" content="#1f3f63">
 <link rel="manifest" href="manifest.webmanifest">
@@ -19,7 +19,7 @@
 <body>
 <style>
 /* Layout: una sola columna de lectura (máx. 42rem); el reproductor queda fijo abajo como en una app de pódcast,
-   y la franja turquesa de 4 px de Wakanda marca el borde superior. */
+   y una franja turquesa de 4 px marca el borde superior. */
 :root {
   --azul: #3b6ca7;
   --azul-hondo: #1f3f63;
@@ -233,7 +233,7 @@ button { cursor: pointer; }
 <main id="vista-biblioteca" class="marco">
   <header class="cabeza">
     <div class="crece">
-      <h1>Wakanda Escucha</h1>
+      <h1>Escucha</h1>
       <p>Tus documentos en voz alta, también con la pantalla apagada.</p>
     </div>
     <button class="icono-btn" id="btn-ajustes" aria-label="Ajustes">
@@ -351,14 +351,14 @@ button { cursor: pointer; }
     <label class="opcion" for="chk-pantalla">
       <input type="checkbox" id="chk-pantalla">
       <b>Mantener la pantalla encendida mientras escucho</b>
-      <small>Útil con la voz del celular. Con la voz Wakanda no hace falta.</small>
+      <small>Útil con la voz del celular. Con la voz de Escucha no hace falta.</small>
     </label>
     <h3>Espacio</h3>
     <p id="info-espacio">Calculando…</p>
     <button class="btn btn-borde" id="btn-borrar-audios">Borrar audios generados</button>
     <h3>Con la pantalla apagada</h3>
     <div class="ayuda">
-      <p>Con la voz Wakanda, dale reproducir y bloquea el celular: la lectura sigue y la controlas desde la pantalla de bloqueo o los audífonos.</p>
+      <p>Con la voz de Escucha, dale reproducir y bloquea el celular: la lectura sigue y la controlas desde la pantalla de bloqueo o los audífonos.</p>
       <p>Si el documento es largo y vas a salir, toca «Preparar audio completo» antes. Así todo queda generado y guardado en el celular.</p>
     </div>
     <div class="fila">
@@ -409,21 +409,58 @@ const BD = (() => {
   let promesa = null;
   const memoria = { docs: new Map(), voces: new Map(), audio: new Map() };
   let enMemoria = false;
+  const ALMACENES = ['docs', 'voces', 'audio'];
+  function abrirBase(nombre) {
+    return new Promise((res, rej) => {
+      try {
+        const r = indexedDB.open(nombre, 1);
+        r.onupgradeneeded = () => {
+          const d = r.result;
+          d.createObjectStore('docs', { keyPath: 'id' });
+          d.createObjectStore('voces');
+          d.createObjectStore('audio');
+        };
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+        r.onblocked = () => rej(new Error('bloqueado'));
+      } catch (e) { rej(e); }
+    });
+  }
+  const pedir = (d, almacen, modo, fn) => new Promise((res, rej) => {
+    const t = d.transaction(almacen, modo);
+    const r = fn(t.objectStore(almacen));
+    t.oncomplete = () => res(r && r.result);
+    t.onerror = () => rej(t.error);
+  });
+  // La base se llamaba distinto en la primera versión: se pasa lo guardado (de a un registro, para no
+  // llenar la memoria con la voz) y se borra la anterior. Solo ocurre una vez; este nombre no se muestra.
+  const NOMBRE_ANTERIOR = 'wakanda-escucha';
+  async function traerAnterior(nueva) {
+    let vieja = null;
+    try {
+      if (indexedDB.databases && !(await indexedDB.databases()).some((x) => x.name === NOMBRE_ANTERIOR)) return;
+      vieja = await abrirBase(NOMBRE_ANTERIOR);
+      for (const almacen of ALMACENES) {
+        const claves = await pedir(vieja, almacen, 'readonly', (st) => st.getAllKeys());
+        for (const k of claves || []) {
+          const v = await pedir(vieja, almacen, 'readonly', (st) => st.get(k));
+          await pedir(nueva, almacen, 'readwrite', (st) => (almacen === 'docs' ? st.put(v) : st.put(v, k)));
+        }
+      }
+      vieja.close();
+      vieja = null;
+      indexedDB.deleteDatabase(NOMBRE_ANTERIOR);
+    } catch (e) {
+      console.warn('No se pudieron traer los datos anteriores', e);
+      if (vieja) vieja.close();
+    }
+  }
   function abrir() {
     if (!promesa) {
-      promesa = new Promise((res, rej) => {
-        try {
-          const r = indexedDB.open('wakanda-escucha', 1);
-          r.onupgradeneeded = () => {
-            const d = r.result;
-            d.createObjectStore('docs', { keyPath: 'id' });
-            d.createObjectStore('voces');
-            d.createObjectStore('audio');
-          };
-          r.onsuccess = () => res(r.result);
-          r.onerror = () => rej(r.error);
-          r.onblocked = () => rej(new Error('bloqueado'));
-        } catch (e) { rej(e); }
+      promesa = abrirBase('escucha').then(async (d) => {
+        const docs = await pedir(d, 'docs', 'readonly', (st) => st.count()).catch(() => 1);
+        if (!docs) await traerAnterior(d);
+        return d;
       }).catch(() => { enMemoria = true; return null; });
     }
     return promesa;
@@ -799,7 +836,7 @@ function prepararDocumento({ titulo, origen, bloques, detalle, ejemplo }) {
   return { id: nuevoId(), titulo: (titulo || 'Documento').slice(0, 140), origen, detalle: detalle || '', bloques: conFrases, total, caracteres, pos: 0, creado: ahora, abierto: ahora, ejemplo: !!ejemplo };
 }
 
-// ───────────────────────── Voces Wakanda (Piper dentro del navegador) ─────────────────────────
+// ───────────────────────── Voces descargables (Piper dentro del navegador) ─────────────────────────
 const VOCES = [
   { id: 'es_MX-claude-high', nombre: 'Claude', detalle: 'Español de México · tono más agudo · calidad alta' },
   { id: 'es_MX-ald-medium', nombre: 'Ald', detalle: 'Español de México · tono más grave · calidad media' },
@@ -972,7 +1009,7 @@ const Rep = {
   frases: [],          // [{b: índice de bloque, x: texto}]
   i: 0,
   sonando: false,
-  motor: 'wakanda',    // 'wakanda' | 'celular'
+  motor: 'propia',     // 'propia' (voz descargada) | 'celular'
   velocidad: local.leer('velocidad', 1),
   token: 0,
   clip: null,          // {desde, hasta, inicios:[seg], url}
@@ -1014,8 +1051,8 @@ const Rep = {
     UI.actualizarPreparar();
   },
   elegirMotor() {
-    const puedeWakanda = Motor.descargadas.has(Motor.vozId) && !Motor.fallo;
-    this.motor = puedeWakanda ? 'wakanda' : 'celular';
+    const puedePropia = Motor.descargadas.has(Motor.vozId) && !Motor.fallo;
+    this.motor = puedePropia ? 'propia' : 'celular';
     return this.motor;
   },
   frasePausa(k) {
@@ -1092,7 +1129,7 @@ const Rep = {
   },
   // Genera por adelantado (unos minutos, o todo si se pidió "preparar")
   async generarAdelante() {
-    if (this.generando || this.motor !== 'wakanda' || !this.doc) return;
+    if (this.generando || this.motor !== 'propia' || !this.doc) return;
     this.generando = true;
     const docId = this.doc.id;
     try {
@@ -1213,7 +1250,7 @@ const Rep = {
       UI.estadoPlay();
       UI.aviso('');
       if (Motor.fallo || /arrancar|descargada/.test(e.message)) {
-        avisar('La voz Wakanda no pudo arrancar aquí. Sigo con la voz del celular.');
+        avisar('La voz de Escucha no pudo arrancar aquí. Sigo con la voz del celular.');
         Motor.fallo = Motor.fallo || e.message;
         UI.tarjetaVoz();
         this.reproducir();
@@ -1275,7 +1312,7 @@ const Rep = {
       audio.pause();
       this.clip = null;
       UI.tiempo();
-      if (this.motor === 'wakanda') this.generarAdelante();
+      if (this.motor === 'propia') this.generarAdelante();
       return;
     }
     this.sonando = true;
@@ -1333,10 +1370,10 @@ audio.addEventListener('ended', () => Rep.alTerminar());
 audio.addEventListener('pause', () => {
   // Pausa desde audífonos, pantalla de bloqueo o una llamada
   if (Rep.cambiando || Rep.esperando || audio.ended) return;
-  if (Rep.sonando && Rep.motor === 'wakanda' && Rep.clip) { Rep.sonando = false; UI.estadoPlay(); Rep.guardarPos(true); Sesion.estado('paused'); }
+  if (Rep.sonando && Rep.motor === 'propia' && Rep.clip) { Rep.sonando = false; UI.estadoPlay(); Rep.guardarPos(true); Sesion.estado('paused'); }
 });
 audio.addEventListener('play', () => {
-  if (!Rep.sonando && Rep.motor === 'wakanda' && Rep.clip) { Rep.sonando = true; UI.estadoPlay(); Sesion.estado('playing'); }
+  if (!Rep.sonando && Rep.motor === 'propia' && Rep.clip) { Rep.sonando = true; UI.estadoPlay(); Sesion.estado('playing'); }
 });
 
 // Voz del celular (Web Speech): sin descarga, pero suele pararse con la pantalla bloqueada.
@@ -1358,7 +1395,7 @@ const Celular = {
   },
   voz() { return this.voces.find((v) => v.voiceURI === this.elegida) || this.voces[0] || null; },
   hablar(k) {
-    if (!this.disponible) { Rep.sonando = false; UI.estadoPlay(); avisar('Este navegador no tiene voz propia. Descarga la voz Wakanda.'); return; }
+    if (!this.disponible) { Rep.sonando = false; UI.estadoPlay(); avisar('Este navegador no tiene voz propia. Descarga la voz de Escucha.'); return; }
     const turno = ++this.turno;
     speechSynthesis.cancel();
     const decir = (j) => {
@@ -1376,7 +1413,7 @@ const Celular = {
       u.onerror = (e) => { if (e.error !== 'interrupted' && e.error !== 'canceled') setTimeout(() => decir(j + 1), 200); };
       speechSynthesis.speak(u);
     };
-    UI.aviso(Motor.descargadas.size ? '' : 'Voz del celular. Para escuchar con la pantalla apagada, descarga la voz Wakanda.');
+    UI.aviso(Motor.descargadas.size ? '' : 'Voz del celular. Para escuchar con la pantalla apagada, descarga la voz de Escucha.');
     decir(k);
   },
   callar() { this.turno++; if (this.disponible) speechSynthesis.cancel(); },
@@ -1395,7 +1432,7 @@ const Sesion = {
       g.strokeStyle = '#e7e38a'; g.lineWidth = 20; g.lineCap = 'round';
       for (const [x, h] of [[156, 90], [216, 190], [276, 250], [336, 150], [396, 70]]) { g.beginPath(); g.moveTo(x - 40, 280 - h / 2); g.lineTo(x - 40, 280 + h / 2); g.stroke(); }
       g.fillStyle = '#ffffff'; g.font = '900 56px Lato, Arial, sans-serif'; g.textAlign = 'center';
-      g.fillText('Wakanda', 256, 450);
+      g.fillText('Escucha', 256, 450);
       this.arte = c.toDataURL('image/png');
     } catch (e) {}
   },
@@ -1405,7 +1442,7 @@ const Sesion = {
     try {
       navigator.mediaSession.metadata = new MediaMetadata({
         title: Rep.doc.titulo,
-        artist: 'Wakanda Escucha',
+        artist: 'Escucha',
         album: `Frase ${Rep.i + 1} de ${Rep.frases.length}`,
         artwork: this.arte ? [{ src: this.arte, sizes: '512x512', type: 'image/png' }] : [],
       });
@@ -1476,6 +1513,13 @@ const UI = {
   seguirHasta: 0,
   async biblioteca() {
     try { this.docs = await BD.todos('docs'); } catch (e) { this.docs = []; }
+    for (const [n, d] of this.docs.entries()) {
+      if (!d.ejemplo || d.titulo === GUIA.titulo) continue;
+      const nueva = { ...prepararDocumento(GUIA), id: d.id, abierto: d.abierto, creado: d.creado };
+      this.docs[n] = nueva;
+      BD.guardar('docs', nueva).catch(() => {});
+      BD.borrarRango('audio', d.id + '|', d.id + '|\uffff').catch(() => {});
+    }
     if (!this.docs.length && !local.leer('ejemploBorrado', false)) {
       const ej = prepararDocumento(GUIA);
       this.docs = [ej];
@@ -1578,10 +1622,10 @@ const UI = {
     this.marcar(Rep.i, true, true);
     this.tiempo();
     this.actualizarPreparar();
-    this.aviso(Rep.motor === 'celular' ? (Motor.descargadas.size ? '' : 'Usando la voz del celular. Descarga la voz Wakanda para la pantalla apagada.') : '');
+    this.aviso(Rep.motor === 'celular' ? (Motor.descargadas.size ? '' : 'Usando la voz del celular. Descarga la voz de Escucha para la pantalla apagada.') : '');
     window.scrollTo(0, 0);
     if (Rep.i > 0) setTimeout(() => this.marcar(Rep.i, true, true), 50);
-    if (Rep.motor === 'wakanda') Motor.iniciar().catch(() => {});
+    if (Rep.motor === 'propia') Motor.iniciar().catch(() => {});
     BD.guardar('docs', d).catch(() => {});
   },
   volver() {
@@ -1647,7 +1691,7 @@ const UI = {
   aviso(t) { $('aviso-rep').textContent = t; },
   actualizarPreparar() {
     const z = $('zona-preparar'), b = $('btn-preparar');
-    if (!Rep.doc || Rep.motor !== 'wakanda' || !Motor.descargadas.has(Motor.vozId)) { z.hidden = true; return; }
+    if (!Rep.doc || Rep.motor !== 'propia' || !Motor.descargadas.has(Motor.vozId)) { z.hidden = true; return; }
     z.hidden = false;
     const n = Rep.listas(), total = Rep.frases.length;
     if (n >= total) { b.textContent = 'Audio completo guardado ✓'; b.disabled = true; }
@@ -1661,7 +1705,7 @@ const UI = {
   tarjetaVoz() {
     const v = VOCES.find((x) => x.id === Motor.vozId) || VOCES[0];
     const lista = Motor.descargadas.has(v.id);
-    $('voz-titulo').textContent = Motor.fallo ? 'La voz Wakanda no pudo arrancar aquí' : lista ? `Voz Wakanda lista: ${v.nombre}` : 'Descarga la voz para escuchar en la calle';
+    $('voz-titulo').textContent = Motor.fallo ? 'La voz de Escucha no pudo arrancar aquí' : lista ? `Voz lista: ${v.nombre}` : 'Descarga la voz para escuchar en la calle';
     $('voz-texto').textContent = Motor.fallo
       ? 'Abre esta página en Safari o Chrome actualizados. Mientras tanto se usa la voz del celular, que necesita la pantalla encendida.'
       : lista
@@ -1671,7 +1715,7 @@ const UI = {
     const estado = $('voz-estado');
     estado.querySelector('.punto').classList.toggle('ok', lista && !Motor.fallo);
     estado.querySelector('span:last-child').textContent = Motor.fallo
-      ? 'Este navegador no pudo usar la voz Wakanda; se usa la del celular'
+      ? 'Este navegador no pudo usar la voz de Escucha; se usa la del celular'
       : lista ? 'Funciona con la pantalla apagada' : 'Mientras tanto se usa la voz del celular';
   },
   async descargarVoz(id) {
@@ -1732,7 +1776,7 @@ const UI = {
         this.tarjetaVoz();
       });
       const b = document.createElement('b');
-      b.textContent = 'Voz Wakanda · ' + v.nombre;
+      b.textContent = 'Voz ' + v.nombre;
       const sm = document.createElement('small');
       sm.textContent = v.detalle + (Motor.descargadas.has(v.id) ? ' · descargada' : ' · 63 MB');
       const acc = document.createElement('div');
@@ -1793,17 +1837,17 @@ const UI = {
 
 // Guía de ejemplo (sirve para probar la voz)
 const GUIA = {
-  titulo: 'Guía rápida de Wakanda Escucha',
+  titulo: 'Guía rápida de Escucha',
   origen: 'Guía',
   ejemplo: true,
   bloques: [
-    { t: 'h', x: 'Guía rápida de Wakanda Escucha' },
+    { t: 'h', x: 'Guía rápida de Escucha' },
     { t: 'p', x: 'Esta guía es un ejemplo. Dale al botón de reproducir y escúchala para probar cómo suena la app.' },
     { t: 'h', x: 'Agrega un documento' },
     { t: 'li', x: 'Toca «Abrir archivo» para elegir un PDF, un Word, un archivo de texto o una exportación de Notion, ya sea en Markdown, en HTML o el .zip completo.' },
     { t: 'li', x: 'Toca «Pegar texto» para leer lo que hayas copiado: una página web, un correo o el contenido de una página de Notion.' },
     { t: 'h', x: 'Escucha con la pantalla apagada' },
-    { t: 'p', x: 'Descarga una vez la voz Wakanda. Pesa unos 75 megas, así que es mejor hacerlo con WiFi. Después el audio se genera dentro de tu celular y tus documentos no se envían a ningún servidor.' },
+    { t: 'p', x: 'Descarga una vez la voz de Escucha. Pesa unos 75 megas, así que es mejor hacerlo con WiFi. Después el audio se genera dentro de tu celular y tus documentos no se envían a ningún servidor.' },
     { t: 'p', x: 'Dale reproducir y bloquea el celular. La lectura sigue sonando, y puedes pausar o saltar desde la pantalla de bloqueo o desde los audífonos.' },
     { t: 'p', x: 'Si el documento es largo y vas a salir, toca «Preparar audio completo» antes. Así todo el audio queda listo y guardado en el celular.' },
     { t: 'h', x: 'Controla la lectura' },
