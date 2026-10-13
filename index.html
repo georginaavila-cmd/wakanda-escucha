@@ -172,7 +172,7 @@ button { cursor: pointer; }
 .barra-lector .titulo-doc { flex: 1; min-width: 0; display: flex; align-items: center; gap: 6px; min-height: 44px; padding: 0; border: 0; background: none; text-align: left; font-family: var(--f-titulo); font-weight: 700; font-size: var(--t-base); color: var(--titulo); }
 .titulo-doc span { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .titulo-doc svg { width: 16px; height: 16px; flex: none; color: var(--texto-2); }
-.texto { font-size: var(--t-lectura); line-height: 1.75; padding-block: 16px 220px; }
+.texto { font-size: var(--t-lectura); line-height: 1.75; padding-block: 16px 240px; }
 .texto .h { font-family: var(--f-titulo); font-weight: 900; color: var(--titulo); font-size: var(--t-h3); line-height: 1.3; margin: 1.4em 0 0.4em; text-wrap: balance; }
 .texto .h:first-child { margin-top: 0.4em; font-size: var(--t-h1); line-height: 1.15; }
 .texto .p { margin: 0 0 0.9em; max-width: 65ch; }
@@ -187,13 +187,37 @@ button { cursor: pointer; }
 .reproductor { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--superficie); border-top: 1px solid var(--borde); box-shadow: var(--sombra); padding-bottom: env(safe-area-inset-bottom, 0px); }
 .reproductor .avance { height: 4px; background: var(--superficie-2); }
 .reproductor .avance > i { display: block; height: 100%; width: 0; background: var(--turquesa); }
-.controles { max-width: 42rem; margin: 0 auto; padding: 10px 16px 6px; display: grid; grid-template-columns: 1fr auto auto auto 1fr; align-items: center; gap: 10px; }
+.controles { max-width: 42rem; margin: 0 auto; padding: 4px 16px 6px; display: grid; grid-template-columns: 1fr auto auto auto 1fr; align-items: center; gap: 10px; }
+.nota-btn { justify-self: end; width: 52px; height: 52px; border-radius: 50%; border: 2px solid var(--turquesa); background: transparent; color: var(--acento-texto); display: grid; place-items: center; }
+.nota-btn svg { width: 26px; height: 26px; }
 .vel { justify-self: start; min-width: 64px; min-height: 40px; border-radius: 999px; border: 1px solid var(--borde); background: transparent; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--texto); }
 .salto { width: 48px; height: 48px; border-radius: 50%; border: 0; background: transparent; color: var(--titulo); display: grid; place-items: center; }
 .salto svg { width: 28px; height: 28px; }
 .play { width: 64px; height: 64px; border-radius: 50%; border: 0; background: var(--azul); color: var(--sobre-marca); display: grid; place-items: center; box-shadow: 0 6px 16px rgba(59, 108, 167, 0.35); }
 .play svg { width: 30px; height: 30px; }
-.tiempo { justify-self: end; font-size: var(--t-xs); color: var(--texto-2); text-align: right; font-variant-numeric: tabular-nums; line-height: 1.3; }
+.tiempo { max-width: 42rem; margin: 0 auto; padding: 8px 16px 0; font-size: var(--t-xs); color: var(--texto-2); text-align: center; font-variant-numeric: tabular-nums; min-height: 1.2em; }
+.contador { position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; background: var(--turquesa); color: #04282a; font-size: 0.6875rem; font-weight: 600; display: grid; place-items: center; font-variant-numeric: tabular-nums; }
+.icono-btn { position: relative; }
+/* Notas */
+.lista-notas { list-style: none; margin: 0; padding: 0 0 48px; display: grid; gap: 8px; }
+.dia { margin: 20px 0 4px; font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--texto-2); }
+.nota { display: grid; gap: 4px; width: 100%; text-align: left; background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio); padding: 12px 14px; }
+.nota .cuando { font-size: var(--t-xs); color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.nota .cuerpo { font-size: var(--t-base); line-height: 1.5; overflow-wrap: anywhere; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.nota .sobre { font-size: var(--t-xs); color: var(--texto-2); font-style: italic; overflow-wrap: anywhere; }
+.etiqueta { display: inline-block; font-size: 0.6875rem; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: var(--superficie-2); color: var(--texto-2); margin-left: 6px; }
+.etiqueta.ok { background: var(--turquesa); color: #04282a; }
+.nueva-nota { margin: 12px 0 4px; }
+.dictado-estado { display: flex; gap: 8px; align-items: center; font-weight: 600; color: var(--titulo); min-height: 1.6em; }
+.punto-vivo { width: 10px; height: 10px; border-radius: 50%; background: var(--peligro); flex: none; animation: latido 1.2s ease-in-out infinite; }
+@keyframes latido { 50% { opacity: 0.25; } }
+.microfono { width: 84px; height: 84px; border-radius: 50%; border: 0; background: var(--azul); color: var(--sobre-marca); display: grid; place-items: center; margin: 12px auto; box-shadow: 0 6px 16px rgba(59, 108, 167, 0.35); }
+.microfono svg { width: 38px; height: 38px; }
+.microfono.activo { background: var(--peligro); }
+.hoja textarea.nota-texto { min-height: 22vh; font-size: var(--t-base); }
+.sobre-nota { font-size: var(--t-sm); color: var(--texto-2); font-style: italic; margin: 0 0 8px; }
+.hoja audio { width: 100%; margin: 8px 0; }
+@media (prefers-reduced-motion: reduce) { .punto-vivo { animation: none; } }
 .aviso-rep { max-width: 42rem; margin: 0 auto; padding: 0 16px 10px; font-size: var(--t-xs); color: var(--texto-2); text-align: center; min-height: 1.2em; }
 .aviso-rep b { color: var(--acento-texto); font-weight: 600; }
 .preparar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; max-width: 42rem; margin: 0 auto; padding: 0 16px 10px; }
@@ -220,13 +244,12 @@ button { cursor: pointer; }
 .ayuda p { color: var(--texto); }
 
 /* Avisos */
-.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 30; max-width: min(92vw, 30rem); background: var(--titulo); color: var(--fondo); padding: 10px 16px; border-radius: 12px; font-size: var(--t-sm); box-shadow: var(--sombra); }
+.toast { position: fixed; left: 50%; transform: translateX(-50%); top: calc(12px + env(safe-area-inset-top, 0px)); z-index: 30; max-width: min(92vw, 30rem); background: var(--titulo); color: var(--fondo); padding: 10px 16px; border-radius: 12px; font-size: var(--t-sm); box-shadow: var(--sombra); }
 .cargando { position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; background: rgba(13, 24, 38, 0.45); }
 .cargando div { background: var(--superficie); padding: 18px 22px; border-radius: 14px; display: flex; gap: 12px; align-items: center; box-shadow: var(--sombra); max-width: 90vw; }
 .giro { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--superficie-2); border-top-color: var(--turquesa); animation: giro 0.9s linear infinite; flex: none; }
 @keyframes giro { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .giro { animation-duration: 3s; } .or, .barra > i { transition: none; } }
-.con-reproductor .toast { bottom: calc(160px + env(safe-area-inset-bottom, 0px)); }
 .pequeno { font-size: var(--t-xs); color: var(--texto-2); }
 .boton-texto { border: 0; background: none; padding: 0; color: var(--enlace); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 .hoja a { color: var(--enlace); font-weight: 600; }
@@ -241,6 +264,7 @@ button { cursor: pointer; }
       <h1>Escucha</h1>
       <p>Tus documentos en voz alta, también con la pantalla apagada.</p>
     </div>
+    <button class="icono-btn" id="btn-notas" aria-label="Notas de voz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v12l-4 4H5z"/><path d="M15 20v-4h4M8 9h8M8 13h5"/></svg><span class="contador" id="contador-notas" hidden>0</span></button>
     <button class="icono-btn" id="btn-ajustes" aria-label="Ajustes">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
     </button>
@@ -296,8 +320,26 @@ button { cursor: pointer; }
   <article class="texto" id="texto"></article>
 </main>
 
+<main id="vista-notas" class="marco" hidden>
+  <div class="barra-lector">
+    <button class="icono-btn" id="btn-volver-notas" aria-label="Volver a la biblioteca">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="titulo-doc"><span>Notas de voz</span></div>
+    <button class="icono-btn" id="btn-compartir-notas" aria-label="Compartir todas las notas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 8l5-5 5 5M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
+    </button>
+  </div>
+  <div class="fila nueva-nota" style="justify-content: flex-start">
+    <button class="btn btn-azul" id="btn-nueva-nota"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>Nueva nota</span></button>
+    <button class="btn btn-borde" id="btn-enviar-todas" hidden>Enviar a Notion</button>
+  </div>
+  <div id="notas"></div>
+</main>
+
 <div class="reproductor" id="reproductor" hidden>
   <div class="avance"><i id="avance"></i></div>
+  <div class="tiempo" id="tiempo"></div>
   <div class="controles">
     <button class="vel" id="btn-vel" aria-label="Cambiar velocidad">1×</button>
     <button class="salto" id="btn-atras" aria-label="Frase anterior">
@@ -310,12 +352,54 @@ button { cursor: pointer; }
     <button class="salto" id="btn-adelante" aria-label="Frase siguiente">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg>
     </button>
-    <div class="tiempo" id="tiempo"></div>
+    <button class="nota-btn" id="btn-nota" aria-label="Dictar una nota"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></button>
   </div>
   <div class="preparar" id="zona-preparar">
     <button class="btn btn-borde" id="btn-preparar">Preparar audio completo</button>
   </div>
   <div class="aviso-rep" id="aviso-rep"></div>
+</div>
+
+<div class="velo" id="hoja-dictado" hidden>
+  <div class="hoja" role="dialog" aria-modal="true" aria-labelledby="dictado-titulo">
+    <h2 id="dictado-titulo">Nota de voz</h2>
+    <p class="sobre-nota" id="dictado-sobre"></p>
+    <div class="dictado-estado" id="dictado-estado"></div>
+    <button class="microfono" id="btn-microfono" aria-label="Empezar a dictar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></button>
+    <label for="dictado-texto">Texto de la nota</label>
+    <textarea id="dictado-texto" class="nota-texto" placeholder="Aquí aparece lo que dices. También puedes escribir o usar el micrófono del teclado."></textarea>
+    <audio id="dictado-audio" controls hidden></audio>
+    <div class="fila">
+      <button type="button" class="btn btn-borde" id="dictado-descartar">Descartar</button>
+      <button type="button" class="btn btn-azul" id="dictado-guardar">Guardar y seguir</button>
+    </div>
+  </div>
+</div>
+
+<div class="velo" id="hoja-nota" hidden>
+  <div class="hoja" role="dialog" aria-modal="true" aria-labelledby="nota-titulo">
+    <h2 id="nota-titulo">Nota</h2>
+    <p class="sobre-nota" id="nota-sobre"></p>
+    <label for="nota-texto">Texto</label>
+    <textarea id="nota-texto" class="nota-texto"></textarea>
+    <audio id="nota-audio" controls hidden></audio>
+    <p class="pequeno" id="nota-estado"></p>
+    <div class="fila" style="justify-content: flex-start">
+      <button type="button" class="btn btn-borde" id="nota-ir">Ir a ese punto</button>
+      <button type="button" class="btn btn-borde" id="nota-copiar">Copiar</button>
+      <button type="button" class="btn btn-borde" id="nota-compartir">Compartir</button>
+      <button type="button" class="btn btn-borde" id="nota-notion">Enviar a Notion</button>
+    </div>
+    <div id="nota-destino" hidden>
+      <label for="nota-pagina">Página de Notion donde guardar tus notas</label>
+      <input type="url" id="nota-pagina" placeholder="https://www.notion.so/…" autocomplete="off" inputmode="url">
+      <p class="pequeno">Compártela con tu integración «Escucha» en Notion (··· → Conexiones). Queda guardada para las próximas notas.</p>
+    </div>
+    <div class="fila">
+      <button type="button" class="btn btn-peligro" id="nota-borrar">Borrar</button>
+      <button type="button" class="btn btn-azul" id="nota-guardar">Guardar</button>
+    </div>
+  </div>
 </div>
 
 <div class="velo" id="hoja-nombre" hidden>
@@ -461,18 +545,19 @@ function numero(n, dec = 1) { return n.toLocaleString('es-CO', { maximumFraction
 // ───────────────────────── Almacenamiento (IndexedDB con respaldo en memoria) ─────────────────────────
 const BD = (() => {
   let promesa = null;
-  const memoria = { docs: new Map(), voces: new Map(), audio: new Map() };
+  const memoria = { docs: new Map(), voces: new Map(), audio: new Map(), notas: new Map() };
   let enMemoria = false;
   const ALMACENES = ['docs', 'voces', 'audio'];
   function abrirBase(nombre) {
     return new Promise((res, rej) => {
       try {
-        const r = indexedDB.open(nombre, 1);
+        const r = indexedDB.open(nombre, 2);
         r.onupgradeneeded = () => {
           const d = r.result;
-          d.createObjectStore('docs', { keyPath: 'id' });
-          d.createObjectStore('voces');
-          d.createObjectStore('audio');
+          if (!d.objectStoreNames.contains('docs')) d.createObjectStore('docs', { keyPath: 'id' });
+          if (!d.objectStoreNames.contains('voces')) d.createObjectStore('voces');
+          if (!d.objectStoreNames.contains('audio')) d.createObjectStore('audio');
+          if (!d.objectStoreNames.contains('notas')) d.createObjectStore('notas', { keyPath: 'id' });
         };
         r.onsuccess = () => res(r.result);
         r.onerror = () => rej(r.error);
@@ -1668,6 +1753,7 @@ const UI = {
     $('btn-actualizar').hidden = !d.fuente;
     this.pintarTexto();
     $('vista-biblioteca').hidden = true;
+    $('vista-notas').hidden = true;
     $('vista-lector').hidden = false;
     $('reproductor').hidden = false;
     document.body.classList.add('con-reproductor');
@@ -1740,8 +1826,7 @@ const UI = {
   tiempo() {
     if (!Rep.doc) return;
     const falta = minutos(Rep.restante());
-    $('tiempo').textContent = `${Math.min(Rep.i + 1, Rep.frases.length)} / ${Rep.frases.length}` + (falta ? `\nfaltan ${falta}` : '');
-    $('tiempo').style.whiteSpace = 'pre-line';
+    $('tiempo').textContent = `Frase ${Math.min(Rep.i + 1, Rep.frases.length)} de ${Rep.frases.length}` + (falta ? ` · faltan ${falta}` : '');
   },
   aviso(t) { $('aviso-rep').textContent = t; },
   actualizarPreparar() {
@@ -2012,6 +2097,7 @@ const MENSAJES_NOTION = {
   pedido: 'El puente no entendió el pedido. Revisa que copiaste el código completo del puente.',
   puente: 'El puente no respondió como se esperaba. Revisa que la dirección termine en /exec y que el acceso sea «Cualquier usuario».',
   red: 'No se pudo conectar con el puente. Revisa tu internet y la dirección del puente.',
+  escritura: 'Tu integración de Notion no tiene permiso para escribir. En notion.so/profile/integrations → Escucha → Capacidades, marca «Insertar contenido» y guarda. Si ya lo hiciste, actualiza el código del puente con el de la guía.',
 };
 const Notion = {
   config() { return local.leer('notion', null); },
@@ -2028,7 +2114,11 @@ const Notion = {
       });
       let respuesta;
       try { respuesta = JSON.parse(await r.text()); } catch (e) { throw new Error(MENSAJES_NOTION.puente); }
-      if (respuesta.error) throw new Error(MENSAJES_NOTION[respuesta.error] || 'Notion respondió: ' + (respuesta.detalle || respuesta.error));
+      if (respuesta.error) {
+        const error = new Error(MENSAJES_NOTION[respuesta.error] || 'Notion respondió: ' + (respuesta.detalle || respuesta.error));
+        error.codigo = respuesta.error;
+        throw error;
+      }
       return respuesta;
     } catch (e) {
       if (e.name === 'AbortError') throw new Error('Notion tardó demasiado en responder. Inténtalo de nuevo.');
@@ -2228,10 +2318,451 @@ $('btn-borrar-audios').addEventListener('click', async () => {
   UI.espacio();
   avisar('Audios borrados. Se vuelven a generar cuando los escuches.');
 });
-for (const id of ['hoja-pegar', 'hoja-ajustes', 'hoja-nombre', 'hoja-notion']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; });
+for (const id of ['hoja-pegar', 'hoja-ajustes', 'hoja-nombre', 'hoja-notion', 'hoja-nota']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { $('hoja-pegar').hidden = true; $('hoja-ajustes').hidden = true; $('hoja-nombre').hidden = true; $('hoja-notion').hidden = true; }
+  if (e.key === 'Escape') { $('hoja-pegar').hidden = true; $('hoja-ajustes').hidden = true; $('hoja-nombre').hidden = true; $('hoja-notion').hidden = true; $('hoja-nota').hidden = true; }
   if (e.key === ' ' && !$('vista-lector').hidden && !/input|textarea|select|button/i.test(e.target.tagName)) { e.preventDefault(); Rep.alternar(); }
+});
+
+// ───────────────────────── Notas de voz ─────────────────────────
+// El botón del micrófono pausa la lectura y abre el dictado. El texto sale del reconocimiento de voz del
+// navegador (en iPhone, el dictado de Siri). Si no está disponible se graba el audio, y siempre se puede
+// escribir o usar el micrófono del teclado. Cada nota guarda el documento y la frase que se escuchaba.
+const ReconocimientoVoz = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+const idiomaDictado = () => (/^es\b/i.test(navigator.language || '') ? navigator.language : 'es-419');
+const recortar = (t, n) => (t.length > n ? t.slice(0, n - 1).trimEnd() + '…' : t);
+
+const Notas = {
+  lista: [],
+  async cargar() {
+    try { this.lista = await BD.todos('notas'); } catch (e) { this.lista = []; }
+    this.lista.sort((a, b) => b.creado - a.creado);
+    this.contador();
+  },
+  contador() {
+    const c = $('contador-notas');
+    c.textContent = this.lista.length;
+    c.hidden = !this.lista.length;
+  },
+  async guardar(n) {
+    n.editado = Date.now();
+    if (!this.lista.includes(n)) this.lista.unshift(n);
+    this.contador();
+    try { await BD.guardar('notas', n); } catch (e) { avisar('No se pudo guardar la nota en este celular.'); }
+  },
+  async borrar(n) {
+    this.lista = this.lista.filter((x) => x !== n);
+    this.contador();
+    try { await BD.borrar('notas', n.id); } catch (e) {}
+  },
+  fecha(t) { return new Date(t).toLocaleString('es-CO', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' }); },
+  comoTexto(n) {
+    return [
+      Notas.fecha(n.creado) + (n.docTitulo ? ' · ' + n.docTitulo : ''),
+      n.texto || '(nota de audio sin texto)',
+      n.contexto ? 'Escuchando: «' + n.contexto + '»' : '',
+    ].filter(Boolean).join('\n');
+  },
+};
+
+function mostrarAudio(el, n) {
+  if (el.dataset.url) { URL.revokeObjectURL(el.dataset.url); delete el.dataset.url; }
+  if (n && n.audio) {
+    el.dataset.url = URL.createObjectURL(new Blob([n.audio], { type: n.tipoAudio || 'audio/mp4' }));
+    el.src = el.dataset.url;
+    el.hidden = false;
+  } else {
+    el.removeAttribute('src');
+    el.hidden = true;
+  }
+}
+
+const Dictado = {
+  nota: null,
+  retomar: false,
+  rec: null,
+  grabadora: null,
+  silencio: 0,
+  cuentaAtras: 0,
+  reloj: 0,
+  error: '',
+  abrir(sinDocumento) {
+    this.retomar = Rep.sonando && !sinDocumento;
+    if (Rep.sonando) Rep.pausar();
+    const f = !sinDocumento && Rep.doc ? Rep.frases[Rep.i] : null;
+    this.nota = {
+      id: nuevoId(), docId: f ? Rep.doc.id : '', docTitulo: f ? Rep.doc.titulo : '', frase: f ? Rep.i : -1,
+      contexto: f ? f.x : '', texto: '', audio: null, tipoAudio: '', creado: Date.now(), enviada: null,
+    };
+    $('dictado-sobre').textContent = f ? `Sobre «${Rep.doc.titulo}»: «${recortar(f.x, 120)}»` : 'Nota sin documento';
+    $('dictado-texto').value = '';
+    mostrarAudio($('dictado-audio'), null);
+    $('hoja-dictado').hidden = false;
+    this.empezar();
+  },
+  empezar() {
+    clearTimeout(this.cuentaAtras);
+    if (ReconocimientoVoz) this.reconocer();
+    else this.grabar('Grabando… habla ahora. Toca el botón rojo para terminar.');
+  },
+  estado(tipo, texto) {
+    const e = $('dictado-estado');
+    e.textContent = '';
+    if (tipo === 'vivo') { const p = document.createElement('i'); p.className = 'punto-vivo'; e.appendChild(p); }
+    e.appendChild(document.createTextNode((tipo === 'ok' ? '✓ ' : '') + texto));
+  },
+  boton(activo) {
+    const b = $('btn-microfono');
+    b.classList.toggle('activo', activo);
+    b.setAttribute('aria-label', activo ? 'Terminar' : 'Dictar');
+  },
+  reconocer() {
+    let r;
+    try {
+      r = new ReconocimientoVoz();
+      r.lang = idiomaDictado();
+      r.continuous = true;
+      r.interimResults = true;
+    } catch (e) {
+      return this.grabar('Grabando… habla ahora. Toca el botón rojo para terminar.');
+    }
+    const base = $('dictado-texto').value.trim();
+    this.error = '';
+    r.onresult = (e) => {
+      let t = '';
+      for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript;
+      $('dictado-texto').value = (base ? base + ' ' : '') + t.trim();
+      this.vigilarSilencio(2500);
+    };
+    r.onerror = (e) => { this.error = e.error || 'error'; };
+    r.onend = () => this.finReconocimiento(r);
+    try { r.start(); } catch (e) { return this.grabar('Grabando… habla ahora. Toca el botón rojo para terminar.'); }
+    this.rec = r;
+    this.boton(true);
+    this.estado('vivo', 'Te escucho… habla ahora');
+    this.vigilarSilencio(7000);
+  },
+  // Termina solo cuando dejas de hablar, para no tener que tocar nada al manejar.
+  vigilarSilencio(ms) {
+    clearTimeout(this.silencio);
+    this.silencio = setTimeout(() => { if (this.rec) this.rec.stop(); }, ms);
+  },
+  finReconocimiento(r) {
+    if (this.rec !== r) return;
+    clearTimeout(this.silencio);
+    this.rec = null;
+    this.boton(false);
+    const texto = $('dictado-texto').value.trim();
+    if (this.error && !['no-speech', 'aborted'].includes(this.error) && !texto) {
+      return this.grabar('No pude convertir la voz a texto aquí. Te grabo la nota en audio: habla ahora.');
+    }
+    if (!texto) { this.estado('', 'No te escuché. Toca el micrófono para intentarlo otra vez.'); return; }
+    this.guardarYSeguir('Nota guardada.');
+  },
+  async grabar(mensaje) {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
+      this.estado('', 'Aquí no se puede usar el micrófono. Toca el cuadro de texto y dicta con el micrófono del teclado.');
+      return;
+    }
+    let stream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch (e) {
+      this.estado('', 'Necesito permiso para el micrófono (en el iPhone: Ajustes → Safari → Micrófono). Mientras tanto puedes escribir o dictar con el teclado.');
+      return;
+    }
+    const tipo = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/webm'].find((t) => MediaRecorder.isTypeSupported(t)) || '';
+    const mr = new MediaRecorder(stream, tipo ? { mimeType: tipo } : undefined);
+    const trozos = [];
+    const inicio = Date.now();
+    const vigia = vigilarVoz(stream, () => { if (mr.state === 'recording') mr.stop(); });
+    mr.ondataavailable = (e) => { if (e.data && e.data.size) trozos.push(e.data); };
+    mr.onstop = async () => {
+      stream.getTracks().forEach((t) => t.stop());
+      vigia();
+      clearInterval(this.reloj);
+      this.grabadora = null;
+      this.boton(false);
+      const blob = new Blob(trozos, { type: mr.mimeType || tipo || 'audio/mp4' });
+      if (blob.size < 1500 || !this.nota) { this.estado('', 'No se grabó nada. Toca el micrófono para intentarlo otra vez.'); return; }
+      this.nota.audio = await blob.arrayBuffer();
+      this.nota.tipoAudio = blob.type;
+      this.nota.duracion = Math.round((Date.now() - inicio) / 1000);
+      mostrarAudio($('dictado-audio'), this.nota);
+      this.guardarYSeguir('Nota de audio guardada. Si quieres, escribe su texto.');
+    };
+    mr.start();
+    this.grabadora = mr;
+    this.boton(true);
+    this.estado('vivo', mensaje);
+    this.reloj = setInterval(() => {
+      const seg = Math.round((Date.now() - inicio) / 1000);
+      this.estado('vivo', `Grabando ${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')} · toca el botón rojo para terminar`);
+      if (seg >= 180 && mr.state === 'recording') mr.stop();
+    }, 1000);
+  },
+  // Guarda de una vez y, si se estaba escuchando, sigue leyendo a los pocos segundos.
+  async guardarYSeguir(mensaje) {
+    this.nota.texto = $('dictado-texto').value.trim();
+    await Notas.guardar(this.nota);
+    let quedan = 3;
+    const contar = () => {
+      if (!this.retomar) { this.estado('ok', mensaje); return; }
+      this.estado('ok', `${mensaje} Sigo leyendo en ${quedan} s…`);
+      if (quedan-- <= 0) return this.cerrar(true);
+      this.cuentaAtras = setTimeout(contar, 1000);
+    };
+    contar();
+  },
+  detener() {
+    clearTimeout(this.silencio);
+    clearTimeout(this.cuentaAtras);
+    if (this.rec) { const r = this.rec; this.rec = null; try { r.abort(); } catch (e) {} }
+    if (this.grabadora && this.grabadora.state === 'recording') { this.grabadora.onstop = null; try { this.grabadora.stop(); this.grabadora.stream.getTracks().forEach((t) => t.stop()); } catch (e) {} }
+    this.grabadora = null;
+    clearInterval(this.reloj);
+    this.boton(false);
+  },
+  cerrar(seguir) {
+    this.detener();
+    $('hoja-dictado').hidden = true;
+    mostrarAudio($('dictado-audio'), null);
+    if (!$('vista-notas').hidden) VistaNotas.pintar();
+    if (seguir && this.retomar && !$('vista-lector').hidden) Rep.reproducir();
+    this.retomar = false;
+  },
+};
+
+// Detecta cuándo terminas de hablar mientras se graba audio (3 s de silencio después de haber hablado).
+function vigilarVoz(stream, alCallar) {
+  let ctx, intervalo;
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    ctx = new Ctx();
+    const analizador = ctx.createAnalyser();
+    analizador.fftSize = 1024;
+    ctx.createMediaStreamSource(stream).connect(analizador);
+    const datos = new Float32Array(analizador.fftSize);
+    let hablo = false, callado = 0;
+    intervalo = setInterval(() => {
+      if (ctx.state !== 'running') return;
+      analizador.getFloatTimeDomainData(datos);
+      let suma = 0;
+      for (const v of datos) suma += v * v;
+      const nivel = Math.sqrt(suma / datos.length);
+      if (nivel > 0.03) { hablo = true; callado = 0; } else if (hablo && (callado += 200) >= 3000) alCallar();
+    }, 200);
+  } catch (e) {}
+  return () => { clearInterval(intervalo); if (ctx) ctx.close().catch(() => {}); };
+}
+
+$('btn-nota').addEventListener('click', () => Dictado.abrir(false));
+$('btn-microfono').addEventListener('click', () => {
+  if (Dictado.rec) { Dictado.rec.stop(); return; }
+  if (Dictado.grabadora) { Dictado.grabadora.stop(); return; }
+  Dictado.empezar();
+});
+$('dictado-texto').addEventListener('focus', () => {
+  if (!Dictado.cuentaAtras) return;
+  clearTimeout(Dictado.cuentaAtras);
+  Dictado.cuentaAtras = 0;
+  Dictado.estado('', 'Corrige lo que quieras y toca «Guardar y seguir».');
+});
+$('dictado-guardar').addEventListener('click', async () => {
+  const n = Dictado.nota;
+  Dictado.detener();
+  n.texto = $('dictado-texto').value.trim();
+  if (n.texto || n.audio) { await Notas.guardar(n); avisar('Nota guardada.'); }
+  Dictado.cerrar(true);
+});
+$('dictado-descartar').addEventListener('click', async () => {
+  const n = Dictado.nota;
+  Dictado.detener();
+  if (Notas.lista.includes(n)) await Notas.borrar(n);
+  Dictado.cerrar(true);
+});
+
+// Vista de notas
+const VistaNotas = {
+  abrir() {
+    Rep.pausar();
+    $('vista-biblioteca').hidden = true;
+    $('vista-notas').hidden = false;
+    this.pintar();
+    window.scrollTo(0, 0);
+  },
+  cerrar() {
+    $('vista-notas').hidden = true;
+    $('vista-biblioteca').hidden = false;
+    window.scrollTo(0, 0);
+  },
+  pintar() {
+    const caja = $('notas');
+    caja.textContent = '';
+    $('btn-enviar-todas').hidden = EN_CLAUDE || !Notion.conectado() || !Notas.lista.some((n) => !n.enviada && n.texto);
+    $('btn-compartir-notas').hidden = !Notas.lista.length;
+    if (!Notas.lista.length) {
+      const p = document.createElement('p');
+      p.className = 'vacio';
+      p.textContent = 'Todavía no tienes notas. Mientras escuchas un documento, toca el micrófono del reproductor y di tu nota: la lectura se pausa, la nota se guarda y la lectura sigue.';
+      caja.appendChild(p);
+      return;
+    }
+    const hoy = new Date().toDateString();
+    const ayer = new Date(Date.now() - 864e5).toDateString();
+    let dia = '', ul = null;
+    for (const n of Notas.lista) {
+      const d = new Date(n.creado);
+      const etiqueta = d.toDateString() === hoy ? 'Hoy' : d.toDateString() === ayer ? 'Ayer' : d.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
+      if (etiqueta !== dia) {
+        dia = etiqueta;
+        const h = document.createElement('h2');
+        h.className = 'dia';
+        h.textContent = etiqueta;
+        ul = document.createElement('ul');
+        ul.className = 'lista-notas';
+        caja.append(h, ul);
+      }
+      const li = document.createElement('li');
+      const b = document.createElement('button');
+      b.className = 'nota';
+      const cuando = document.createElement('span');
+      cuando.className = 'cuando';
+      cuando.textContent = d.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' }) + (n.docTitulo ? ' · ' + n.docTitulo : '');
+      if (n.audio) { const e = document.createElement('span'); e.className = 'etiqueta'; e.textContent = 'Audio'; cuando.appendChild(e); }
+      if (n.enviada) { const e = document.createElement('span'); e.className = 'etiqueta ok'; e.textContent = 'En Notion'; cuando.appendChild(e); }
+      const cuerpo = document.createElement('span');
+      cuerpo.className = 'cuerpo';
+      cuerpo.textContent = n.texto || 'Nota de audio. Tócala para escucharla o escribir su texto.';
+      b.append(cuando, cuerpo);
+      if (n.contexto) { const s = document.createElement('span'); s.className = 'sobre'; s.textContent = '«' + recortar(n.contexto, 140) + '»'; b.appendChild(s); }
+      b.addEventListener('click', () => abrirNota(n));
+      li.appendChild(b);
+      ul.appendChild(li);
+    }
+  },
+};
+
+function destinoNotion(n) {
+  const doc = UI.docs.find((d) => d.id === n.docId);
+  if (doc && doc.fuente) return { enlace: doc.fuente, nombre: doc.titulo };
+  const p = local.leer('paginaNotas', null);
+  return p && p.enlace ? { enlace: p.enlace, nombre: 'tu página de notas' } : null;
+}
+
+let notaAbierta = null;
+function abrirNota(n) {
+  notaAbierta = n;
+  $('nota-titulo').textContent = 'Nota · ' + Notas.fecha(n.creado);
+  $('nota-sobre').textContent = n.docTitulo ? `Sobre «${n.docTitulo}»` + (n.contexto ? `: «${recortar(n.contexto, 160)}»` : '') : 'Nota sin documento';
+  $('nota-texto').value = n.texto || '';
+  mostrarAudio($('nota-audio'), n);
+  $('nota-ir').hidden = !(n.docId && UI.docs.some((d) => d.id === n.docId));
+  $('nota-notion').hidden = EN_CLAUDE;
+  const destino = destinoNotion(n);
+  $('nota-notion').textContent = destino ? 'Enviar a Notion · ' + recortar(destino.nombre, 22) : 'Enviar a Notion';
+  $('nota-destino').hidden = true;
+  $('nota-estado').textContent = n.enviada ? `Enviada a Notion (${n.enviada.nombre}) el ${Notas.fecha(n.enviada.fecha)}.` : '';
+  const borrar = $('nota-borrar');
+  borrar.dataset.confirma = '';
+  borrar.textContent = 'Borrar';
+  $('hoja-nota').hidden = false;
+}
+function cerrarNota() {
+  $('hoja-nota').hidden = true;
+  mostrarAudio($('nota-audio'), null);
+  notaAbierta = null;
+}
+async function compartirTexto(titulo, texto) {
+  if (navigator.share) {
+    try { await navigator.share({ title: titulo, text: texto }); return; } catch (e) { if (e.name === 'AbortError') return; }
+  }
+  try { await navigator.clipboard.writeText(texto); avisar('Copiado. Pégalo donde quieras.'); } catch (e) { avisar('No se pudo copiar en este navegador.'); }
+}
+async function enviarANotion(notas, destino) {
+  if (!Notion.conectado()) { cerrarNota(); abrirNotion(); return false; }
+  cargando('Enviando a Notion…');
+  try {
+    await Notion.pedir({ anexar: { pagina: destino.enlace, notas: notas.map((n) => ({ fecha: Notas.fecha(n.creado), texto: n.texto, documento: n.docTitulo, contexto: n.contexto })) } });
+    const ahora = Date.now();
+    for (const n of notas) { n.enviada = { fecha: ahora, enlace: destino.enlace, nombre: destino.nombre }; await Notas.guardar(n); }
+    avisar(notas.length === 1 ? 'Nota enviada a Notion.' : notas.length + ' notas enviadas a Notion.');
+    return true;
+  } catch (e) {
+    avisar(e.codigo === 'sin-permiso' ? MENSAJES_NOTION.escritura : e.message, 10000);
+    return false;
+  } finally {
+    cargando('');
+  }
+}
+$('btn-notas').addEventListener('click', () => VistaNotas.abrir());
+$('btn-volver-notas').addEventListener('click', () => VistaNotas.cerrar());
+$('btn-nueva-nota').addEventListener('click', () => Dictado.abrir(true));
+$('btn-compartir-notas').addEventListener('click', () => compartirTexto('Notas de voz', Notas.lista.map(Notas.comoTexto).join('\n\n')));
+$('btn-enviar-todas').addEventListener('click', async () => {
+  const pendientes = Notas.lista.filter((n) => !n.enviada && n.texto);
+  const sinDestino = pendientes.find((n) => !destinoNotion(n));
+  if (sinDestino) { abrirNota(sinDestino); $('nota-destino').hidden = false; avisar('Elige primero la página de Notion para tus notas y toca «Enviar a Notion».', 7000); return; }
+  const grupos = new Map();
+  for (const n of pendientes) { const d = destinoNotion(n); if (!grupos.has(d.enlace)) grupos.set(d.enlace, { destino: d, notas: [] }); grupos.get(d.enlace).notas.push(n); }
+  for (const g of grupos.values()) if (!(await enviarANotion(g.notas, g.destino))) break;
+  VistaNotas.pintar();
+});
+$('nota-guardar').addEventListener('click', async () => {
+  const n = notaAbierta;
+  if (!n) return;
+  n.texto = $('nota-texto').value.trim();
+  await Notas.guardar(n);
+  cerrarNota();
+  VistaNotas.pintar();
+  avisar('Nota guardada.');
+});
+$('nota-borrar').addEventListener('click', async () => {
+  const b = $('nota-borrar');
+  if (b.dataset.confirma !== '1') { b.dataset.confirma = '1'; b.textContent = '¿Seguro? Toca otra vez'; return; }
+  const n = notaAbierta;
+  cerrarNota();
+  if (n) await Notas.borrar(n);
+  VistaNotas.pintar();
+  avisar('Nota borrada.');
+});
+$('nota-copiar').addEventListener('click', async () => {
+  const n = notaAbierta;
+  if (!n) return;
+  const texto = Notas.comoTexto({ ...n, texto: $('nota-texto').value.trim() });
+  try { await navigator.clipboard.writeText(texto); avisar('Nota copiada.'); } catch (e) { $('nota-texto').select(); avisar('Selecciona el texto y cópialo.'); }
+});
+$('nota-compartir').addEventListener('click', () => {
+  const n = notaAbierta;
+  if (n) compartirTexto('Nota de voz', Notas.comoTexto({ ...n, texto: $('nota-texto').value.trim() }));
+});
+$('nota-ir').addEventListener('click', async () => {
+  const n = notaAbierta;
+  cerrarNota();
+  if (!n) return;
+  $('vista-notas').hidden = true;
+  await UI.abrirDoc(n.docId);
+  if (Rep.doc && n.frase >= 0) Rep.irA(Math.min(n.frase, Rep.frases.length - 1), false);
+});
+$('nota-notion').addEventListener('click', async () => {
+  const n = notaAbierta;
+  if (!n) return;
+  n.texto = $('nota-texto').value.trim();
+  if (!n.texto) { avisar('Escribe el texto de la nota antes de enviarla a Notion.'); return; }
+  let destino = destinoNotion(n);
+  if (!destino) {
+    if ($('nota-destino').hidden) {
+      $('nota-destino').hidden = false;
+      $('nota-pagina').focus();
+      avisar('Pega el enlace de la página de Notion donde quieres guardar tus notas.', 6000);
+      return;
+    }
+    const enlace = $('nota-pagina').value.trim();
+    if (!ENLACE_NOTION.test(enlace)) { avisar(MENSAJES_NOTION.enlace); return; }
+    local.guardar('paginaNotas', { enlace });
+    destino = destinoNotion(n);
+  }
+  if (await enviarANotion([n], destino)) { cerrarNota(); VistaNotas.pintar(); }
 });
 
 // ───────────────────────── Arranque ─────────────────────────
@@ -2243,7 +2774,8 @@ document.addEventListener('keydown', (e) => {
   await Motor.revisarDescargadas();
   UI.tarjetaVoz();
   await UI.biblioteca();
-  window.__escucha = { Rep, Motor, UI, BD, bloquesDesdeMarkdown, bloquesDesdeHTML, frasesDe, paraDecir, importarArchivos };
+  await Notas.cargar();
+  window.__escucha = { Rep, Motor, UI, BD, Notas, Dictado, bloquesDesdeMarkdown, bloquesDesdeHTML, frasesDe, paraDecir, importarArchivos };
 })();
 </script>
 

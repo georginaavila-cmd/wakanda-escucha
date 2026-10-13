@@ -1,6 +1,6 @@
 // Guarda la app en el celular para que abra sin internet.
 // Las voces no pasan por aquí: la app las guarda aparte (IndexedDB) al descargarlas.
-const VERSION = "7389b909e87e";
+const VERSION = "6dc5a147f6a4";
 const CACHE = 'escucha-' + VERSION;
 const ARCHIVOS = [
  "./",

@@ -71,14 +71,14 @@ pre { margin: 0; background: var(--codigo); color: var(--codigo-texto); border-r
 <main>
   <a class="volver" href="./">← Volver a Escucha</a>
   <h1>Conectar Notion</h1>
-  <p class="intro">Para escuchar una página privada de Notion pegando su enlace, se preparan dos cosas una sola vez: un permiso de lectura en Notion y un puente gratuito en tu cuenta de Google. Toma unos 10 minutos y es más cómodo en el computador. Tus páginas no quedan públicas: solo quien tenga el token puede leerlas.</p>
+  <p class="intro">Para escuchar una página privada de Notion pegando su enlace, y para enviarle tus notas de voz, se preparan dos cosas una sola vez: un permiso en Notion y un puente gratuito en tu cuenta de Google. Toma unos 10 minutos y es más cómodo en el computador. Tus páginas no quedan públicas: solo quien tenga el token puede leerlas.</p>
 
   <section class="paso">
-    <h2><span>1</span>Crea el permiso de lectura en Notion</h2>
+    <h2><span>1</span>Crea el permiso en Notion</h2>
     <ol>
       <li>Entra a <a href="https://www.notion.so/profile/integrations" target="_blank" rel="noopener">notion.so/profile/integrations</a>.</li>
       <li>Toca <b>Nueva integración</b> (New integration). Nombre: <b>Escucha</b>. Elige tu espacio de trabajo, tipo <b>Interna</b>, y guarda.</li>
-      <li>En <b>Capacidades</b> (Capabilities) deja marcado solo <b>Leer contenido</b> (Read content) y guarda los cambios.</li>
+      <li>En <b>Capacidades</b> (Capabilities) deja marcados <b>Leer contenido</b> (Read content) e <b>Insertar contenido</b> (Insert content), y guarda los cambios. Insertar sirve para enviar tus notas de voz; la app nunca cambia ni borra lo que ya está escrito.</li>
       <li>Junto a <b>Token secreto de integración interna</b> (Internal Integration Secret) toca <b>Mostrar</b> y <b>Copiar</b>. Empieza por <code>ntn_</code>. Guárdalo para el paso 4.</li>
     </ol>
   </section>
@@ -97,7 +97,7 @@ pre { margin: 0; background: var(--codigo); color: var(--codigo-texto); border-r
     <ol>
       <li>Entra a <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener">script.google.com</a> con tu cuenta de Google. Se abre un proyecto nuevo.</li>
       <li>Arriba, cambia «Proyecto sin título» por <b>Puente Escucha</b>.</li>
-      <li>Borra el código que aparece, pega el código de abajo (botón <b>Copiar código</b>) y guarda con el ícono del disquete.</li>
+      <li>Borra el código que aparece, pega el código de abajo del paso 6 (botón <b>Copiar código</b>) y guarda con el ícono del disquete.</li>
       <li>Toca <b>Implementar</b> (Deploy) → <b>Nueva implementación</b> (New deployment).</li>
       <li>En el engranaje de «Seleccionar tipo», elige <b>Aplicación web</b> (Web app).</li>
       <li><b>Ejecutar como:</b> Yo. <b>Quién tiene acceso:</b> Cualquier usuario (Anyone). Toca <b>Implementar</b>.</li>
@@ -118,8 +118,18 @@ pre { margin: 0; background: var(--codigo); color: var(--codigo-texto); border-r
   </section>
 
   <section class="paso">
-    <h2><span>5</span>Código del puente</h2>
-    <p>Lee la página con la API oficial de Notion y le devuelve el texto a la app. No guarda el token ni el contenido.</p>
+    <h2><span>5</span>Tus notas de voz en Notion</h2>
+    <p>Desde la sección <b>Notas</b> de Escucha puedes enviar cada nota a Notion. Se agrega al final de la página como una viñeta con la fecha, y debajo, en gris, el documento y la frase que estabas escuchando.</p>
+    <ul>
+      <li>Si la nota es sobre un documento que viene de Notion, se agrega a esa misma página.</li>
+      <li>Si no, va a tu página de notas: crea en Notion una página, por ejemplo «Notas de Escucha», compártela con la integración (paso 2) y pega su enlace la primera vez que envíes una nota.</li>
+    </ul>
+    <p class="nota">¿Ya habías creado el puente antes? Pega el código nuevo (paso 6) en tu proyecto, guarda, y en <b>Implementar → Gestionar implementaciones</b> toca el lápiz, elige <b>Versión: Nueva versión</b> e <b>Implementar</b>. La dirección del puente no cambia.</p>
+  </section>
+
+  <section class="paso">
+    <h2><span>6</span>Código del puente</h2>
+    <p>Lee la página con la API oficial de Notion y le devuelve el texto a la app; también agrega tus notas al final de una página. No guarda el token ni el contenido.</p>
     <div class="codigo-caja">
       <button class="copiar" id="copiar" type="button">Copiar código</button>
       <pre id="codigo">/**
@@ -127,6 +137,7 @@ pre { margin: 0; background: var(--codigo); color: var(--codigo-texto); border-r
  *
  * La app le manda el enlace de una página y el token de tu integración de Notion; el puente lee la
  * página con la API oficial de Notion y devuelve su texto en orden (títulos, párrafos, listas, tablas).
+ * También agrega al final de una página las notas de voz que le envíes desde la app.
  * No guarda nada: ni el token ni el contenido.
  *
  * Se publica como «Aplicación web» (Ejecutar como: yo · Quién tiene acceso: cualquier usuario).
@@ -161,6 +172,7 @@ function atender(pedido) {
       var yo = api(&#x27;users/me&#x27;);
       return { ok: true, nombre: yo.name || &#x27;integración&#x27; };
     }
+    if (pedido.anexar) return anexarNotas(api, pedido.anexar);
     var id = idDeNotion(pedido.pagina || &#x27;&#x27;);
     if (!id) return { error: &#x27;enlace&#x27; };
     return leerPagina(api, id, !!pedido.subpaginas);
@@ -358,6 +370,43 @@ function leerTabla(api, id, salida) {
     var celdas = ((fila.table_row || {}).cells || []).map(texto).filter(function (c) { return c; });
     if (celdas.length) poner(salida, &#x27;p&#x27;, celdas.join(&#x27;, &#x27;) + &#x27;.&#x27;);
   });
+}
+
+// Agrega las notas al final de la página: una viñeta por nota (fecha en negrita y el texto)
+// y debajo, en gris, el documento y la frase que se estaba escuchando.
+function anexarNotas(api, pedido) {
+  var id = idDeNotion(pedido.pagina || &#x27;&#x27;);
+  if (!id) return { error: &#x27;enlace&#x27; };
+  var bloques = (pedido.notas || []).map(bloqueDeNota);
+  for (var i = 0; i &lt; bloques.length; i += 50) {
+    api(&#x27;blocks/&#x27; + id + &#x27;/children&#x27;, &#x27;patch&#x27;, { children: bloques.slice(i, i + 50) });
+  }
+  return { ok: true, enviadas: bloques.length };
+}
+
+function trozosDeTexto(texto, estilo) {
+  var partes = [];
+  var limpio = String(texto || &#x27;&#x27;);
+  for (var i = 0; i &lt; limpio.length &amp;&amp; partes.length &lt; 90; i += 1900) {
+    var parte = { type: &#x27;text&#x27;, text: { content: limpio.slice(i, i + 1900) } };
+    if (estilo) parte.annotations = estilo;
+    partes.push(parte);
+  }
+  return partes;
+}
+
+function bloqueDeNota(nota) {
+  var texto = [].concat(trozosDeTexto(String(nota.fecha || &#x27;&#x27;) + &#x27; · &#x27;, { bold: true }), trozosDeTexto(nota.texto));
+  var bloque = { object: &#x27;block&#x27;, type: &#x27;bulleted_list_item&#x27;, bulleted_list_item: { rich_text: texto } };
+  var sobre = nota.documento ? &#x27;Escuchando «&#x27; + nota.documento + &#x27;»&#x27; + (nota.contexto ? &#x27;: «&#x27; + String(nota.contexto).slice(0, 400) + &#x27;»&#x27; : &#x27;&#x27;) : &#x27;&#x27;;
+  if (sobre) {
+    bloque.bulleted_list_item.children = [{
+      object: &#x27;block&#x27;,
+      type: &#x27;paragraph&#x27;,
+      paragraph: { rich_text: trozosDeTexto(sobre, { italic: true, color: &#x27;gray&#x27; }) },
+    }];
+  }
+  return bloque;
 }
 
 function leerHijosCrudos(api, id, salida) {
