@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Conectar Notion</title>
+<meta name="description" content="Cómo conectar Escucha con Notion para escuchar tus páginas pegando su enlace.">
+<meta name="theme-color" content="#1f3f63">
+<link rel="icon" href="iconos/favicon-64.png" type="image/png">
+<link rel="stylesheet" href="fuentes/fuentes.css">
+<style>
+/* Layout: una columna de lectura con pasos numerados (es un procedimiento en orden) y el código al final. */
+:root {
+  --azul: #3b6ca7;
+  --azul-hondo: #1f3f63;
+  --turquesa: #00a8a8;
+  --fondo: #f4f7fb;
+  --superficie: #ffffff;
+  --texto: #1d2733;
+  --texto-2: #586779;
+  --titulo: #1f3f63;
+  --enlace: #2d5a8a;
+  --borde: #d8e1ec;
+  --nota: #fbeef1;
+  --codigo: #172538;
+  --codigo-texto: #e6edf5;
+  --f-titulo: "Lato", "Helvetica Neue", Arial, sans-serif;
+  --f-texto: "Jost", "Century Gothic", "Helvetica Neue", Arial, sans-serif;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --fondo: #0f1a27;
+    --superficie: #172538;
+    --texto: #e6edf5;
+    --texto-2: #9fb1c5;
+    --titulo: #c3d3e6;
+    --enlace: #9fc0e8;
+    --borde: #2a3d56;
+    --nota: #3a2630;
+    --codigo: #0b131d;
+    color-scheme: dark;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--fondo); color: var(--texto); font-family: var(--f-texto); font-size: 1.0625rem; line-height: 1.6; }
+.franja { height: 4px; background: var(--turquesa); }
+main { max-width: 44rem; margin: 0 auto; padding: 24px 16px 64px; }
+h1, h2 { font-family: var(--f-titulo); color: var(--titulo); text-wrap: balance; line-height: 1.2; }
+h1 { font-weight: 900; font-size: 2rem; margin: 8px 0 8px; }
+h2 { font-weight: 900; font-size: 1.3rem; margin: 0 0 8px; }
+p { margin: 0 0 12px; }
+a { color: var(--enlace); font-weight: 600; }
+.volver { display: inline-block; margin-bottom: 8px; font-size: 0.9rem; }
+.intro { color: var(--texto-2); }
+.paso { background: var(--superficie); border: 1px solid var(--borde); border-radius: 14px; padding: 18px 18px 8px; margin: 16px 0; }
+.paso h2 { display: flex; gap: 10px; align-items: baseline; }
+.paso h2 span { flex: none; display: inline-grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--azul); color: #ffffff; font-size: 0.95rem; }
+ol, ul { margin: 0 0 12px; padding-left: 1.3em; }
+li { margin-bottom: 8px; }
+b { font-weight: 600; }
+.nota { background: var(--nota); border-radius: 10px; padding: 10px 14px; font-size: 0.95rem; margin: 0 0 12px; }
+.codigo-caja { position: relative; margin: 8px 0 12px; }
+pre { margin: 0; background: var(--codigo); color: var(--codigo-texto); border-radius: 12px; padding: 16px; overflow: auto; max-height: 26rem; font: 0.8rem/1.5 ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+.copiar { position: sticky; top: 8px; float: right; margin: 8px; border: 0; border-radius: 999px; padding: 8px 14px; background: var(--turquesa); color: #04282a; font: 600 0.9rem var(--f-texto); cursor: pointer; }
+:focus-visible { outline: 3px solid var(--turquesa); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<div class="franja"></div>
+<main>
+  <a class="volver" href="./">← Volver a Escucha</a>
+  <h1>Conectar Notion</h1>
+  <p class="intro">Para escuchar una página privada de Notion pegando su enlace, se preparan dos cosas una sola vez: un permiso de lectura en Notion y un puente gratuito en tu cuenta de Google. Toma unos 10 minutos y es más cómodo en el computador. Tus páginas no quedan públicas: solo quien tenga el token puede leerlas.</p>
+
+  <section class="paso">
+    <h2><span>1</span>Crea el permiso de lectura en Notion</h2>
+    <ol>
+      <li>Entra a <a href="https://www.notion.so/profile/integrations" target="_blank" rel="noopener">notion.so/profile/integrations</a>.</li>
+      <li>Toca <b>Nueva integración</b> (New integration). Nombre: <b>Escucha</b>. Elige tu espacio de trabajo, tipo <b>Interna</b>, y guarda.</li>
+      <li>En <b>Capacidades</b> (Capabilities) deja marcado solo <b>Leer contenido</b> (Read content) y guarda los cambios.</li>
+      <li>Junto a <b>Token secreto de integración interna</b> (Internal Integration Secret) toca <b>Mostrar</b> y <b>Copiar</b>. Empieza por <code>ntn_</code>. Guárdalo para el paso 4.</li>
+    </ol>
+  </section>
+
+  <section class="paso">
+    <h2><span>2</span>Dale acceso a tus páginas</h2>
+    <p>La integración solo ve las páginas que tú le compartas. Las páginas que están dentro de una página compartida quedan incluidas.</p>
+    <ul>
+      <li>Desde la integración: pestaña <b>Acceso</b> (Access) → <b>Editar acceso</b> → elige las páginas.</li>
+      <li>O desde cada página: toca <b>···</b> arriba a la derecha → <b>Conexiones</b> (Connections) → busca <b>Escucha</b> → <b>Confirmar</b>.</li>
+    </ul>
+  </section>
+
+  <section class="paso">
+    <h2><span>3</span>Crea el puente en Google</h2>
+    <ol>
+      <li>Entra a <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener">script.google.com</a> con tu cuenta de Google. Se abre un proyecto nuevo.</li>
+      <li>Arriba, cambia «Proyecto sin título» por <b>Puente Escucha</b>.</li>
+      <li>Borra el código que aparece, pega el código de abajo (botón <b>Copiar código</b>) y guarda con el ícono del disquete.</li>
+      <li>Toca <b>Implementar</b> (Deploy) → <b>Nueva implementación</b> (New deployment).</li>
+      <li>En el engranaje de «Seleccionar tipo», elige <b>Aplicación web</b> (Web app).</li>
+      <li><b>Ejecutar como:</b> Yo. <b>Quién tiene acceso:</b> Cualquier usuario (Anyone). Toca <b>Implementar</b>.</li>
+      <li>Google te pide autorizar: <b>Autorizar acceso</b> → elige tu cuenta. Si aparece «Google no verificó esta app», toca <b>Configuración avanzada</b> → <b>Ir a Puente Escucha</b> → <b>Permitir</b>. El aviso sale porque el código es tuyo y no lo publicó Google.</li>
+      <li>Copia la <b>URL de la aplicación web</b>. Termina en <code>/exec</code>.</li>
+    </ol>
+    <p class="nota">Si «Cualquier usuario» no aparece, tu cuenta de empresa no lo permite. Haz este paso con una cuenta personal de Gmail.</p>
+  </section>
+
+  <section class="paso">
+    <h2><span>4</span>Conecta la app</h2>
+    <ol>
+      <li>Pasa la dirección del puente y el token al celular por un medio privado, por ejemplo una nota en tu correo, y bórrala después.</li>
+      <li>En Escucha toca <b>Enlace de Notion</b>, pega la dirección del puente y el token, y toca <b>Conectar</b>.</li>
+      <li>En Notion abre la página, toca <b>···</b> → <b>Copiar enlace</b>, pégalo en Escucha y toca <b>Leer página</b>.</li>
+    </ol>
+    <p>Cuando cambies la página en Notion, ábrela en Escucha y toca el botón de actualizar (las dos flechas) para traer lo último.</p>
+  </section>
+
+  <section class="paso">
+    <h2><span>5</span>Código del puente</h2>
+    <p>Lee la página con la API oficial de Notion y le devuelve el texto a la app. No guarda el token ni el contenido.</p>
+    <div class="codigo-caja">
+      <button class="copiar" id="copiar" type="button">Copiar código</button>
+      <pre id="codigo">/**
+ * Puente entre la app Escucha y Notion (Google Apps Script).
+ *
+ * La app le manda el enlace de una página y el token de tu integración de Notion; el puente lee la
+ * página con la API oficial de Notion y devuelve su texto en orden (títulos, párrafos, listas, tablas).
+ * No guarda nada: ni el token ni el contenido.
+ *
+ * Se publica como «Aplicación web» (Ejecutar como: yo · Quién tiene acceso: cualquier usuario).
+ */
+var VERSION_NOTION = &#x27;2022-06-28&#x27;;
+var MAX_SUBPAGINAS = 25;
+var MAX_NIVEL = 6;
+
+function doGet() {
+  return responder({ ok: true, app: &#x27;Puente de Escucha para Notion&#x27; });
+}
+
+function doPost(e) {
+  var pedido;
+  try {
+    pedido = JSON.parse(e.postData.contents);
+  } catch (err) {
+    return responder({ error: &#x27;pedido&#x27; });
+  }
+  return responder(atender(pedido));
+}
+
+function responder(datos) {
+  return ContentService.createTextOutput(JSON.stringify(datos)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function atender(pedido) {
+  if (!pedido || !pedido.token) return { error: &#x27;token&#x27; };
+  var api = crearApi(pedido.token);
+  try {
+    if (pedido.prueba) {
+      var yo = api(&#x27;users/me&#x27;);
+      return { ok: true, nombre: yo.name || &#x27;integración&#x27; };
+    }
+    var id = idDeNotion(pedido.pagina || &#x27;&#x27;);
+    if (!id) return { error: &#x27;enlace&#x27; };
+    return leerPagina(api, id, !!pedido.subpaginas);
+  } catch (err) {
+    return { error: err.codigo || &#x27;notion&#x27;, detalle: String(err.message || err) };
+  }
+}
+
+// Saca el identificador de 32 caracteres de cualquier enlace de Notion
+// (notion.so, app.notion.com, notion.site, con o sin título, con ?p= de una página abierta encima).
+function idDeNotion(enlace) {
+  var texto = String(enlace).trim();
+  var encima = texto.match(/[?&amp;]p=([0-9a-f]{32})/i);
+  var ruta = texto.split(/[?#]/)[0];
+  var todos = ruta.match(/[0-9a-f]{32}|[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi);
+  var crudo = encima ? encima[1] : todos ? todos[todos.length - 1] : &#x27;&#x27;;
+  var h = crudo.replace(/-/g, &#x27;&#x27;).toLowerCase();
+  if (h.length !== 32) return &#x27;&#x27;;
+  return h.slice(0, 8) + &#x27;-&#x27; + h.slice(8, 12) + &#x27;-&#x27; + h.slice(12, 16) + &#x27;-&#x27; + h.slice(16, 20) + &#x27;-&#x27; + h.slice(20);
+}
+
+function crearApi(token) {
+  return function (ruta, metodo, cuerpo) {
+    var opciones = {
+      method: metodo || &#x27;get&#x27;,
+      headers: { Authorization: &#x27;Bearer &#x27; + token, &#x27;Notion-Version&#x27;: VERSION_NOTION },
+      muteHttpExceptions: true,
+    };
+    if (cuerpo) {
+      opciones.contentType = &#x27;application/json&#x27;;
+      opciones.payload = JSON.stringify(cuerpo);
+    }
+    for (var intento = 0; intento &lt; 4; intento++) {
+      var r = UrlFetchApp.fetch(&#x27;https://api.notion.com/v1/&#x27; + ruta, opciones);
+      var codigo = r.getResponseCode();
+      if (codigo === 429 || codigo &gt;= 500) {
+        Utilities.sleep(800 * (intento + 1));
+        continue;
+      }
+      var datos = JSON.parse(r.getContentText() || &#x27;{}&#x27;);
+      if (codigo &gt;= 400) {
+        var error = new Error(datos.message || &#x27;Notion respondió &#x27; + codigo);
+        error.codigo = traducirError(codigo, datos.code);
+        throw error;
+      }
+      return datos;
+    }
+    var ocupado = new Error(&#x27;Notion está ocupado&#x27;);
+    ocupado.codigo = &#x27;ocupado&#x27;;
+    throw ocupado;
+  };
+}
+
+function traducirError(codigo, code) {
+  if (codigo === 401 || code === &#x27;unauthorized&#x27;) return &#x27;token&#x27;;
+  if (codigo === 404 || code === &#x27;object_not_found&#x27;) return &#x27;sin-acceso&#x27;;
+  if (codigo === 403 || code === &#x27;restricted_resource&#x27;) return &#x27;sin-permiso&#x27;;
+  if (code === &#x27;validation_error&#x27;) return &#x27;enlace&#x27;;
+  return &#x27;notion&#x27;;
+}
+
+function leerPagina(api, id, conSubpaginas) {
+  var pagina;
+  try {
+    pagina = api(&#x27;pages/&#x27; + id);
+  } catch (err) {
+    if (err.codigo !== &#x27;sin-acceso&#x27; &amp;&amp; err.codigo !== &#x27;enlace&#x27;) throw err;
+    return leerBaseDeDatos(api, id, err);
+  }
+  var bloques = [];
+  leerHijos(api, id, bloques, { nivel: 0, subpaginas: conSubpaginas, enSubpagina: false, contador: { subpaginas: 0 } });
+  return { titulo: tituloDePagina(pagina), bloques: bloques, url: pagina.url };
+}
+
+// El enlace puede ser de una base de datos (una tabla de Notion): se leen los nombres de sus filas.
+function leerBaseDeDatos(api, id, errorPagina) {
+  var base;
+  try {
+    base = api(&#x27;databases/&#x27; + id);
+  } catch (err) {
+    throw errorPagina;
+  }
+  var bloques = [];
+  var cursor = null;
+  var vueltas = 0;
+  do {
+    var r = api(&#x27;databases/&#x27; + id + &#x27;/query&#x27;, &#x27;post&#x27;, cursor ? { page_size: 100, start_cursor: cursor } : { page_size: 100 });
+    r.results.forEach(function (fila) { poner(bloques, &#x27;li&#x27;, tituloDePagina(fila)); });
+    cursor = r.has_more ? r.next_cursor : null;
+    vueltas++;
+  } while (cursor &amp;&amp; vueltas &lt; 5);
+  return { titulo: texto(base.title) || &#x27;Base de datos&#x27;, bloques: bloques, url: base.url };
+}
+
+function tituloDePagina(p) {
+  var props = (p &amp;&amp; p.properties) || {};
+  for (var k in props) {
+    if (props[k] &amp;&amp; props[k].type === &#x27;title&#x27;) return texto(props[k].title) || &#x27;Sin título&#x27;;
+  }
+  return &#x27;Sin título&#x27;;
+}
+
+// Las menciones (personas, fechas, páginas) llegan con «@» adelante; se quita para que la voz no diga «arroba».
+function texto(rico) {
+  return (rico || []).map(function (t) {
+    var s = t.plain_text || &#x27;&#x27;;
+    return t.type === &#x27;mention&#x27; ? s.replace(/^@/, &#x27;&#x27;) : s;
+  }).join(&#x27;&#x27;).trim();
+}
+
+function poner(salida, tipo, valor) {
+  var limpio = String(valor || &#x27;&#x27;).replace(/\s+/g, &#x27; &#x27;).trim();
+  if (/[\p{L}\p{N}]/u.test(limpio)) salida.push({ t: tipo, x: limpio });
+}
+
+function leerHijos(api, id, salida, ctx) {
+  var cursor = null;
+  do {
+    var r = api(&#x27;blocks/&#x27; + id + &#x27;/children?page_size=100&#x27; + (cursor ? &#x27;&amp;start_cursor=&#x27; + encodeURIComponent(cursor) : &#x27;&#x27;));
+    r.results.forEach(function (b) { convertir(api, b, salida, ctx); });
+    cursor = r.has_more ? r.next_cursor : null;
+  } while (cursor);
+}
+
+function convertir(api, b, salida, ctx) {
+  var d = b[b.type] || {};
+  var bajar = b.has_children &amp;&amp; ctx.nivel &lt; MAX_NIVEL;
+  switch (b.type) {
+    case &#x27;heading_1&#x27;:
+    case &#x27;heading_2&#x27;:
+    case &#x27;heading_3&#x27;:
+      poner(salida, &#x27;h&#x27;, texto(d.rich_text));
+      break;
+    case &#x27;paragraph&#x27;:
+    case &#x27;toggle&#x27;:
+      poner(salida, &#x27;p&#x27;, texto(d.rich_text));
+      break;
+    case &#x27;bulleted_list_item&#x27;:
+    case &#x27;numbered_list_item&#x27;:
+      poner(salida, &#x27;li&#x27;, texto(d.rich_text));
+      break;
+    case &#x27;to_do&#x27;:
+      poner(salida, &#x27;li&#x27;, texto(d.rich_text) + (d.checked ? &#x27; (hecho)&#x27; : &#x27;&#x27;));
+      break;
+    case &#x27;quote&#x27;:
+    case &#x27;callout&#x27;:
+      poner(salida, &#x27;q&#x27;, texto(d.rich_text));
+      break;
+    case &#x27;image&#x27;:
+    case &#x27;video&#x27;:
+    case &#x27;audio&#x27;:
+    case &#x27;file&#x27;:
+    case &#x27;pdf&#x27;:
+      poner(salida, &#x27;p&#x27;, texto(d.caption));
+      break;
+    case &#x27;table&#x27;:
+      if (b.has_children) leerTabla(api, b.id, salida);
+      bajar = false;
+      break;
+    case &#x27;child_page&#x27;:
+      poner(salida, &#x27;h&#x27;, d.title);
+      if (ctx.subpaginas &amp;&amp; !ctx.enSubpagina &amp;&amp; ctx.contador.subpaginas &lt; MAX_SUBPAGINAS) {
+        ctx.contador.subpaginas++;
+        leerHijos(api, b.id, salida, { nivel: ctx.nivel + 1, subpaginas: false, enSubpagina: true, contador: ctx.contador });
+      }
+      bajar = false;
+      break;
+    case &#x27;child_database&#x27;:
+      poner(salida, &#x27;h&#x27;, d.title);
+      bajar = false;
+      break;
+    case &#x27;code&#x27;:
+    case &#x27;equation&#x27;:
+    case &#x27;divider&#x27;:
+    case &#x27;breadcrumb&#x27;:
+    case &#x27;table_of_contents&#x27;:
+    case &#x27;bookmark&#x27;:
+    case &#x27;embed&#x27;:
+    case &#x27;link_preview&#x27;:
+    case &#x27;link_to_page&#x27;:
+    case &#x27;unsupported&#x27;:
+      bajar = false;
+      break;
+    default:
+      // column_list, column, synced_block, template: no tienen texto propio, solo lo que llevan adentro
+      break;
+  }
+  if (bajar) leerHijos(api, b.id, salida, { nivel: ctx.nivel + 1, subpaginas: ctx.subpaginas, enSubpagina: ctx.enSubpagina, contador: ctx.contador });
+}
+
+function leerTabla(api, id, salida) {
+  var filas = [];
+  leerHijosCrudos(api, id, filas);
+  filas.forEach(function (fila) {
+    var celdas = ((fila.table_row || {}).cells || []).map(texto).filter(function (c) { return c; });
+    if (celdas.length) poner(salida, &#x27;p&#x27;, celdas.join(&#x27;, &#x27;) + &#x27;.&#x27;);
+  });
+}
+
+function leerHijosCrudos(api, id, salida) {
+  var cursor = null;
+  do {
+    var r = api(&#x27;blocks/&#x27; + id + &#x27;/children?page_size=100&#x27; + (cursor ? &#x27;&amp;start_cursor=&#x27; + encodeURIComponent(cursor) : &#x27;&#x27;));
+    Array.prototype.push.apply(salida, r.results);
+    cursor = r.has_more ? r.next_cursor : null;
+  } while (cursor);
+}
+</pre>
+    </div>
+  </section>
+</main>
+<script>
+document.getElementById('copiar').addEventListener('click', async () => {
+  const boton = document.getElementById('copiar');
+  const codigo = document.getElementById('codigo');
+  try {
+    await navigator.clipboard.writeText(codigo.textContent);
+    boton.textContent = 'Copiado ✓';
+  } catch (e) {
+    const rango = document.createRange();
+    rango.selectNodeContents(codigo);
+    const sel = getSelection();
+    sel.removeAllRanges();
+    sel.addRange(rango);
+    boton.textContent = 'Seleccionado: cópialo';
+  }
+  setTimeout(() => { boton.textContent = 'Copiar código'; }, 2500);
+});
+</script>
+</body>
+</html>

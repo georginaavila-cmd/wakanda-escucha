@@ -144,6 +144,8 @@ button { cursor: pointer; }
 
 /* Agregar */
 .agregar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-block: 16px; }
+.agregar .ancho { grid-column: 1 / -1; }
+@media (min-width: 600px) { .agregar { grid-template-columns: repeat(3, 1fr); } .agregar .ancho { grid-column: auto; } }
 .agregar button { display: grid; gap: 4px; justify-items: start; text-align: left; padding: 14px; border-radius: var(--radio); border: 1px solid var(--borde); background: var(--superficie); min-width: 0; }
 .agregar button svg { width: 26px; height: 26px; color: var(--azul); }
 .agregar b { font-family: var(--f-titulo); font-size: var(--t-base); color: var(--titulo); }
@@ -205,7 +207,7 @@ button { cursor: pointer; }
 .hoja h3 { margin: 20px 0 8px; font-family: var(--f-titulo); font-weight: 700; color: var(--titulo); font-size: var(--t-base); }
 .hoja p { margin: 0 0 10px; color: var(--texto-2); font-size: var(--t-sm); }
 .hoja label { display: block; font-size: var(--t-sm); font-weight: 600; margin: 12px 0 6px; }
-.hoja input[type="text"], .hoja textarea, .hoja select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--borde); background: var(--fondo); }
+.hoja input[type="text"], .hoja input[type="url"], .hoja input[type="password"], .hoja textarea, .hoja select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--borde); background: var(--fondo); }
 .hoja textarea { min-height: 38vh; resize: vertical; line-height: 1.5; }
 .fila { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; justify-content: flex-end; }
 .hoja .opcion { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: start; padding: 12px; border: 1px solid var(--borde); border-radius: 12px; margin: 0 0 8px; font-weight: 400; }
@@ -225,6 +227,9 @@ button { cursor: pointer; }
 @keyframes giro { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .giro { animation-duration: 3s; } .or, .barra > i { transition: none; } }
 .con-reproductor .toast { bottom: calc(160px + env(safe-area-inset-bottom, 0px)); }
+.pequeno { font-size: var(--t-xs); color: var(--texto-2); }
+.boton-texto { border: 0; background: none; padding: 0; color: var(--enlace); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
+.hoja a { color: var(--enlace); font-weight: 600; }
 @media (max-width: 380px) { .agregar { grid-template-columns: 1fr; } .controles { gap: 4px; } }
 </style>
 
@@ -265,6 +270,11 @@ button { cursor: pointer; }
       <b>Pegar texto</b>
       <span>Notion, una página web, un correo o lo que hayas copiado</span>
     </button>
+    <button id="btn-notion" class="ancho">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>
+      <b>Enlace de Notion</b>
+      <span>Pega el enlace de una página de Notion y escúchala</span>
+    </button>
   </div>
   <input type="file" id="entrada-archivo" hidden multiple accept=".pdf,.docx,.txt,.md,.markdown,.html,.htm,.zip,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown,text/html,application/zip">
 
@@ -278,6 +288,7 @@ button { cursor: pointer; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
     <button class="titulo-doc" id="btn-titulo-doc" aria-label="Cambiar el nombre del documento"><span id="titulo-doc"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+    <button class="icono-btn" id="btn-actualizar" aria-label="Actualizar desde Notion" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/></svg></button>
     <button class="icono-btn" id="btn-ajustes-2" aria-label="Ajustes">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
     </button>
@@ -322,10 +333,47 @@ button { cursor: pointer; }
   </div>
 </div>
 
+<div class="velo" id="hoja-notion" hidden>
+  <div class="hoja" role="dialog" aria-modal="true" aria-labelledby="notion-titulo">
+    <h2 id="notion-titulo">Leer de Notion</h2>
+    <div id="notion-no-disponible" hidden>
+      <p>Esta función no funciona dentro de Claude. Ábrela en la versión de la app que publicamos en GitHub.</p>
+      <div class="fila"><button type="button" class="btn btn-azul" data-cerrar="hoja-notion">Entendido</button></div>
+    </div>
+    <form id="form-notion-leer" hidden>
+      <p>En Notion abre la página, toca ··· y luego «Copiar enlace». Pégalo aquí.</p>
+      <label for="notion-enlace">Enlace de la página</label>
+      <input type="url" id="notion-enlace" placeholder="https://www.notion.so/…" autocomplete="off" inputmode="url" enterkeyhint="go">
+      <label class="opcion" for="notion-sub">
+        <input type="checkbox" id="notion-sub">
+        <b>Incluir subpáginas</b>
+        <small>Lee también las páginas que están dentro de esta (hasta 25).</small>
+      </label>
+      <div class="fila">
+        <button type="button" class="btn btn-borde" data-cerrar="hoja-notion">Cancelar</button>
+        <button type="submit" class="btn btn-azul">Leer página</button>
+      </div>
+      <p class="pequeno" id="notion-estado"></p>
+    </form>
+    <form id="form-notion-conectar" hidden>
+      <p>Para leer tus páginas privadas, la app necesita dos datos que se preparan una sola vez, mejor desde el computador. <a href="notion.html" target="_blank" rel="noopener">Ver la guía paso a paso</a></p>
+      <label for="notion-puente">Dirección del puente (termina en /exec)</label>
+      <input type="url" id="notion-puente" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" inputmode="url">
+      <label for="notion-token">Token de la integración de Notion</label>
+      <input type="password" id="notion-token" placeholder="ntn_…" autocomplete="off">
+      <p class="pequeno">Se guardan solo en este celular.</p>
+      <div class="fila">
+        <button type="button" class="btn btn-borde" data-cerrar="hoja-notion">Cancelar</button>
+        <button type="submit" class="btn btn-azul">Conectar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
 <div class="velo" id="hoja-pegar" hidden>
   <div class="hoja" role="dialog" aria-modal="true" aria-labelledby="pegar-titulo">
     <h2 id="pegar-titulo">Pegar texto</h2>
-    <p>Copia el contenido (de Notion, una página web o un correo) y pégalo aquí. Si copias desde Notion se conservan los títulos y las listas.</p>
+    <p>Copia el contenido (de Notion, una página web o un correo) y pégalo aquí. Si copias desde Notion se conservan los títulos y las listas. Si pegas un enlace de Notion, la app lee la página.</p>
     <label for="pegar-nombre">Nombre</label>
     <input type="text" id="pegar-nombre" placeholder="Por ejemplo: Propuesta hotel Cartagena" autocomplete="off">
     <label for="pegar-area">Texto</label>
@@ -353,6 +401,12 @@ button { cursor: pointer; }
       <b>Mantener la pantalla encendida mientras escucho</b>
       <small>Útil con la voz del celular. Con la voz de Escucha no hace falta.</small>
     </label>
+    <h3>Notion</h3>
+    <p id="info-notion">No conectado.</p>
+    <div class="fila" style="justify-content: flex-start; margin-top: 0">
+      <button class="btn btn-borde" id="btn-notion-cambiar">Conectar Notion</button>
+      <button class="btn btn-borde" id="btn-notion-quitar" hidden>Desconectar</button>
+    </div>
     <h3>Espacio</h3>
     <p id="info-espacio">Calculando…</p>
     <button class="btn btn-borde" id="btn-borrar-audios">Borrar audios generados</button>
@@ -822,7 +876,7 @@ function paraDecir(t) {
     .trim();
 }
 
-function prepararDocumento({ titulo, origen, bloques, detalle, ejemplo }) {
+function prepararDocumento({ titulo, origen, bloques, detalle, ejemplo, fuente, subpaginas }) {
   const conFrases = [];
   let total = 0, caracteres = 0;
   for (const b of bloques) {
@@ -833,7 +887,7 @@ function prepararDocumento({ titulo, origen, bloques, detalle, ejemplo }) {
     caracteres += o.reduce((s, f) => s + f.length, 0);
   }
   const ahora = Date.now();
-  return { id: nuevoId(), titulo: (titulo || 'Documento').slice(0, 140), origen, detalle: detalle || '', bloques: conFrases, total, caracteres, pos: 0, creado: ahora, abierto: ahora, ejemplo: !!ejemplo };
+  return { id: nuevoId(), titulo: (titulo || 'Documento').slice(0, 140), origen, detalle: detalle || '', bloques: conFrases, total, caracteres, pos: 0, creado: ahora, abierto: ahora, ejemplo: !!ejemplo, fuente: fuente || '', subpaginas: !!subpaginas };
 }
 
 // ───────────────────────── Voces descargables (Piper dentro del navegador) ─────────────────────────
@@ -1611,6 +1665,7 @@ const UI = {
     d.abierto = Date.now();
     await Rep.abrir(d);
     $('titulo-doc').textContent = d.titulo;
+    $('btn-actualizar').hidden = !d.fuente;
     this.pintarTexto();
     $('vista-biblioteca').hidden = true;
     $('vista-lector').hidden = false;
@@ -1826,6 +1881,17 @@ const UI = {
       sel.appendChild(o);
     }
   },
+  estadoNotion() {
+    const c = Notion.config();
+    const conectado = Notion.conectado();
+    $('info-notion').textContent = EN_CLAUDE
+      ? 'Leer enlaces de Notion solo funciona en la versión de la app publicada en GitHub.'
+      : conectado ? 'Conectado. Puedes pegar enlaces de las páginas que compartiste con tu integración.' : 'No conectado. Conéctalo para escuchar páginas de Notion pegando su enlace.';
+    $('btn-notion-cambiar').textContent = conectado ? 'Cambiar conexión' : 'Conectar Notion';
+    $('btn-notion-cambiar').hidden = EN_CLAUDE;
+    $('btn-notion-quitar').hidden = !conectado || EN_CLAUDE;
+    return c;
+  },
   async espacio() {
     const p = $('info-espacio');
     try {
@@ -1931,6 +1997,158 @@ $('form-nombre').addEventListener('submit', async (e) => {
 $('nombre-cancelar').addEventListener('click', () => { $('hoja-nombre').hidden = true; renombrando = null; });
 $('btn-titulo-doc').addEventListener('click', () => { if (Rep.doc) abrirRenombrar(Rep.doc.id); });
 
+// ───────────────────────── Notion ─────────────────────────
+// Las páginas privadas de Notion se leen con la API oficial a través de un puente en Google Apps Script
+// (app/notion-puente.gs): el navegador no puede llamar a Notion directamente. La dirección del puente
+// y el token de la integración se guardan solo en este celular.
+const EN_CLAUDE = !!window.claude;
+const ENLACE_NOTION = /^https?:\/\/(?:[\w-]+\.)*notion\.(?:so|site|com)\/\S*[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}\S*$/i;
+const MENSAJES_NOTION = {
+  token: 'El token de Notion no es válido. Revísalo en Ajustes → Notion → Cambiar conexión.',
+  'sin-acceso': 'La app no tiene acceso a esa página. En Notion, abre la página, toca ··· → Conexiones y agrega tu integración «Escucha».',
+  'sin-permiso': 'Tu integración de Notion no tiene permiso para leer esa página.',
+  enlace: 'Ese no parece el enlace de una página de Notion.',
+  ocupado: 'Notion está ocupado en este momento. Inténtalo de nuevo en un minuto.',
+  pedido: 'El puente no entendió el pedido. Revisa que copiaste el código completo del puente.',
+  puente: 'El puente no respondió como se esperaba. Revisa que la dirección termine en /exec y que el acceso sea «Cualquier usuario».',
+  red: 'No se pudo conectar con el puente. Revisa tu internet y la dirección del puente.',
+};
+const Notion = {
+  config() { return local.leer('notion', null); },
+  conectado() { const c = this.config(); return !!(c && c.puente && c.token); },
+  async pedir(datos, config = this.config()) {
+    const control = new AbortController();
+    const reloj = setTimeout(() => control.abort(), 150000);
+    try {
+      const r = await fetch(config.puente, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ ...datos, token: config.token }),
+        signal: control.signal,
+      });
+      let respuesta;
+      try { respuesta = JSON.parse(await r.text()); } catch (e) { throw new Error(MENSAJES_NOTION.puente); }
+      if (respuesta.error) throw new Error(MENSAJES_NOTION[respuesta.error] || 'Notion respondió: ' + (respuesta.detalle || respuesta.error));
+      return respuesta;
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('Notion tardó demasiado en responder. Inténtalo de nuevo.');
+      if (e instanceof TypeError) throw new Error(MENSAJES_NOTION.red);
+      throw e;
+    } finally {
+      clearTimeout(reloj);
+    }
+  },
+};
+
+function mostrarFormNotion(cual) {
+  $('notion-no-disponible').hidden = cual !== 'no';
+  $('form-notion-leer').hidden = cual !== 'leer';
+  $('form-notion-conectar').hidden = cual !== 'conectar';
+  $('notion-titulo').textContent = cual === 'conectar' ? 'Conectar Notion' : 'Leer de Notion';
+}
+function abrirNotion(enlace = '', leerYa = false) {
+  $('hoja-notion').hidden = false;
+  if (EN_CLAUDE) return mostrarFormNotion('no');
+  if (!Notion.conectado()) {
+    mostrarFormNotion('conectar');
+    const c = Notion.config() || {};
+    $('notion-puente').value = c.puente || '';
+    $('notion-token').value = c.token || '';
+    $('form-notion-conectar').dataset.enlace = enlace;
+    $('notion-puente').focus();
+    return;
+  }
+  mostrarFormNotion('leer');
+  $('notion-enlace').value = enlace;
+  $('notion-estado').textContent = '';
+  if (leerYa && enlace) return leerDeNotion(enlace, $('notion-sub').checked);
+  $('notion-enlace').focus();
+}
+async function leerDeNotion(enlace, subpaginas) {
+  if (!ENLACE_NOTION.test(enlace)) { avisar(MENSAJES_NOTION.enlace); return; }
+  $('hoja-notion').hidden = true;
+  cargando(subpaginas ? 'Leyendo la página y sus subpáginas en Notion…' : 'Leyendo la página en Notion…');
+  try {
+    const r = await Notion.pedir({ pagina: enlace, subpaginas });
+    if (!r.bloques || !r.bloques.length) { avisar('Esa página de Notion no tiene texto para leer.'); return; }
+    const [d] = await UI.agregarDocs([{ titulo: r.titulo, origen: 'Notion', bloques: r.bloques, fuente: enlace, subpaginas }]);
+    if (d) UI.abrirDoc(d.id);
+  } catch (e) {
+    avisar(e.message, 9000);
+  } finally {
+    cargando('');
+  }
+}
+async function actualizarDesdeNotion() {
+  const d = Rep.doc;
+  if (!d || !d.fuente) return;
+  if (!Notion.conectado()) { abrirNotion(); return; }
+  Rep.pausar();
+  cargando('Trayendo lo último de Notion…');
+  try {
+    const r = await Notion.pedir({ pagina: d.fuente, subpaginas: d.subpaginas });
+    const nuevo = prepararDocumento({ titulo: d.titulo, origen: d.origen, bloques: r.bloques || [], fuente: d.fuente, subpaginas: d.subpaginas });
+    if (!nuevo.total) { avisar('La página de Notion quedó sin texto; dejé la versión que tenías.'); return; }
+    if (JSON.stringify(nuevo.bloques) === JSON.stringify(d.bloques)) { avisar('Ya tenías lo último de Notion.'); return; }
+    Object.assign(d, { bloques: nuevo.bloques, total: nuevo.total, caracteres: nuevo.caracteres, pos: Math.min(d.pos || 0, nuevo.total - 1) });
+    try { await BD.borrarRango('audio', d.id + '|', d.id + '|￿'); await BD.guardar('docs', d); } catch (e) {}
+    await Rep.abrir(d);
+    UI.pintarTexto();
+    UI.marcar(Rep.i, true, true);
+    UI.tiempo();
+    avisar('Listo: el documento tiene lo último de Notion.');
+  } catch (e) {
+    avisar(e.message, 9000);
+  } finally {
+    cargando('');
+  }
+}
+$('btn-notion').addEventListener('click', () => abrirNotion());
+$('btn-actualizar').addEventListener('click', actualizarDesdeNotion);
+$('form-notion-leer').addEventListener('submit', (e) => {
+  e.preventDefault();
+  leerDeNotion($('notion-enlace').value.trim(), $('notion-sub').checked);
+});
+$('form-notion-conectar').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const config = { puente: $('notion-puente').value.trim(), token: $('notion-token').value.trim() };
+  if (!/^https:\/\/\S+$|^http:\/\/(?:127\.0\.0\.1|localhost)[:/]\S*$/.test(config.puente)) { avisar('Pega la dirección del puente; empieza por https://script.google.com/'); return; }
+  if (!config.token) { avisar('Pega el token de tu integración de Notion.'); return; }
+  cargando('Probando la conexión con Notion…');
+  try {
+    await Notion.pedir({ prueba: true }, config);
+    local.guardar('notion', config);
+    avisar('Notion conectado. Ya puedes pegar enlaces.');
+    const enlace = $('form-notion-conectar').dataset.enlace || '';
+    cargando('');
+    abrirNotion(enlace, !!enlace);
+  } catch (err) {
+    avisar(err.message, 9000);
+  } finally {
+    cargando('');
+  }
+});
+document.querySelectorAll('[data-cerrar]').forEach((b) => b.addEventListener('click', () => { $(b.dataset.cerrar).hidden = true; }));
+$('btn-notion-cambiar').addEventListener('click', () => {
+  $('hoja-ajustes').hidden = true;
+  if (EN_CLAUDE) return abrirNotion();
+  $('hoja-notion').hidden = false;
+  mostrarFormNotion('conectar');
+  const c = Notion.config() || {};
+  $('notion-puente').value = c.puente || '';
+  $('notion-token').value = c.token || '';
+  $('form-notion-conectar').dataset.enlace = '';
+});
+$('btn-notion-quitar').addEventListener('click', () => {
+  const b = $('btn-notion-quitar');
+  if (b.dataset.confirma !== '1') { b.dataset.confirma = '1'; b.textContent = '¿Seguro? Toca otra vez'; return; }
+  b.dataset.confirma = '';
+  b.textContent = 'Desconectar';
+  try { localStorage.removeItem('we:notion'); } catch (e) {}
+  UI.estadoNotion();
+  avisar('Notion desconectado de este celular.');
+});
+
 let htmlPegado = null;
 function abrirPegar() {
   htmlPegado = null;
@@ -1947,6 +2165,7 @@ $('pegar-area').addEventListener('paste', (e) => {
 $('pegar-guardar').addEventListener('click', async () => {
   const texto = $('pegar-area').value;
   if (!tieneLetras(texto)) { avisar('Pega primero el texto que quieres escuchar.'); return; }
+  if (ENLACE_NOTION.test(texto.trim())) { $('hoja-pegar').hidden = true; abrirNotion(texto.trim(), true); return; }
   const usarHtml = htmlPegado && htmlPegado.texto === texto;
   let bloques = usarHtml ? bloquesDesdeHTML(htmlPegado.html) : [];
   if (!bloques.length) bloques = bloquesDesdeMarkdown(texto, { saltoEsBloque: true });
@@ -1990,6 +2209,7 @@ function abrirAjustes() {
   UI.vocesCelular();
   UI.espacio();
   $('chk-pantalla').checked = Pantalla.quiere;
+  UI.estadoNotion();
   $('hoja-ajustes').hidden = false;
 }
 $('btn-ajustes').addEventListener('click', abrirAjustes);
@@ -2008,9 +2228,9 @@ $('btn-borrar-audios').addEventListener('click', async () => {
   UI.espacio();
   avisar('Audios borrados. Se vuelven a generar cuando los escuches.');
 });
-for (const id of ['hoja-pegar', 'hoja-ajustes', 'hoja-nombre']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; });
+for (const id of ['hoja-pegar', 'hoja-ajustes', 'hoja-nombre', 'hoja-notion']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') { $('hoja-pegar').hidden = true; $('hoja-ajustes').hidden = true; $('hoja-nombre').hidden = true; }
+  if (e.key === 'Escape') { $('hoja-pegar').hidden = true; $('hoja-ajustes').hidden = true; $('hoja-nombre').hidden = true; $('hoja-notion').hidden = true; }
   if (e.key === ' ' && !$('vista-lector').hidden && !/input|textarea|select|button/i.test(e.target.tagName)) { e.preventDefault(); Rep.alternar(); }
 });
 
