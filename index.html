@@ -1,0 +1,1939 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Wakanda Escucha</title>
+<meta name="description" content="Escucha en voz alta tus PDF, Word, páginas de Notion y textos, también con la pantalla bloqueada.">
+<meta name="theme-color" content="#1f3f63">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="iconos/favicon-64.png" type="image/png">
+<link rel="apple-touch-icon" href="iconos/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Escucha">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="stylesheet" href="fuentes/fuentes.css">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<style>
+/* Layout: una sola columna de lectura (máx. 42rem); el reproductor queda fijo abajo como en una app de pódcast,
+   y la franja turquesa de 4 px de Wakanda marca el borde superior. */
+:root {
+  --azul: #3b6ca7;
+  --azul-hondo: #1f3f63;
+  --turquesa: #00a8a8;
+  --rosa: #ecb2c0;
+  --arena: #e7e38a;
+  --fondo: #f4f7fb;
+  --superficie: #ffffff;
+  --superficie-2: #e8eef6;
+  --texto: #1d2733;
+  --texto-2: #586779;
+  --titulo: #1f3f63;
+  --enlace: #2d5a8a;
+  --acento-texto: #00706f;
+  --borde: #d8e1ec;
+  --resalte: #ede587;
+  --resalte-texto: #1d2733;
+  --nota: #fbeef1;
+  --peligro: #b83227;
+  --sobre-marca: #ffffff;
+  --sombra: 0 10px 30px rgba(31, 63, 99, 0.14);
+  --f-titulo: "Lato", "Helvetica Neue", Arial, sans-serif;
+  --f-texto: "Jost", "Century Gothic", "Questrial", "Helvetica Neue", Arial, sans-serif;
+  --t-xs: 0.75rem;
+  --t-sm: 0.875rem;
+  --t-base: 1rem;
+  --t-lectura: 1.125rem;
+  --t-h3: 1.25rem;
+  --t-h2: 1.5rem;
+  --t-h1: 2rem;
+  --radio: 14px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --azul: #4f80bb;
+    --azul-hondo: #0d1826;
+    --turquesa: #22bdbd;
+    --fondo: #0f1a27;
+    --superficie: #172538;
+    --superficie-2: #20334b;
+    --texto: #e6edf5;
+    --texto-2: #9fb1c5;
+    --titulo: #c3d3e6;
+    --enlace: #9fc0e8;
+    --acento-texto: #6fdada;
+    --borde: #2a3d56;
+    --resalte: #5a5620;
+    --resalte-texto: #fffbe0;
+    --nota: #3a2630;
+    --peligro: #ff8b7d;
+    --sombra: 0 10px 30px rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --azul: #4f80bb;
+  --azul-hondo: #0d1826;
+  --turquesa: #22bdbd;
+  --fondo: #0f1a27;
+  --superficie: #172538;
+  --superficie-2: #20334b;
+  --texto: #e6edf5;
+  --texto-2: #9fb1c5;
+  --titulo: #c3d3e6;
+  --enlace: #9fc0e8;
+  --acento-texto: #6fdada;
+  --borde: #2a3d56;
+  --resalte: #5a5620;
+  --resalte-texto: #fffbe0;
+  --nota: #3a2630;
+  --peligro: #ff8b7d;
+  --sombra: 0 10px 30px rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { min-height: 100%; }
+body {
+  background: var(--fondo);
+  color: var(--texto);
+  font-family: var(--f-texto);
+  font-size: var(--t-base);
+  line-height: 1.55;
+  -webkit-text-size-adjust: 100%;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 3px solid var(--turquesa); outline-offset: 2px; }
+.franja { height: 4px; background: var(--turquesa); }
+
+.marco { max-width: 42rem; margin: 0 auto; padding-inline: 16px; }
+
+/* Encabezado */
+.cabeza { display: flex; align-items: center; gap: 12px; padding-block: 20px 8px; }
+.cabeza h1 { margin: 0; font-family: var(--f-titulo); font-weight: 900; font-size: var(--t-h2); color: var(--titulo); letter-spacing: -0.01em; line-height: 1.1; }
+.cabeza p { margin: 2px 0 0; color: var(--texto-2); font-size: var(--t-sm); }
+.cabeza .crece { flex: 1; min-width: 0; }
+.icono-btn { display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--borde); background: var(--superficie); color: var(--titulo); flex: none; }
+.icono-btn svg { width: 22px; height: 22px; }
+
+/* Tarjeta de voz */
+.voz { margin-block: 12px 4px; padding: 16px; border-radius: var(--radio); background: var(--azul-hondo); color: #ffffff; display: grid; gap: 10px; }
+.voz h2 { margin: 0; font-family: var(--f-titulo); font-size: var(--t-h3); font-weight: 900; text-wrap: balance; }
+.voz p { margin: 0; color: #d6e2f0; font-size: var(--t-sm); }
+.voz .acciones { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.barra { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, 0.18); overflow: hidden; }
+.barra > i { display: block; height: 100%; width: 0; background: var(--turquesa); transition: width 0.2s; }
+.estado-voz { display: inline-flex; align-items: center; gap: 6px; font-size: var(--t-sm); color: #d6e2f0; }
+.punto { width: 8px; height: 8px; border-radius: 50%; background: var(--arena); flex: none; }
+.punto.ok { background: #5ee0a0; }
+
+/* Botones */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 16px; border-radius: 999px; border: 1px solid transparent; font-weight: 600; font-size: var(--t-sm); letter-spacing: 0.01em; }
+.btn svg { width: 20px; height: 20px; flex: none; }
+.btn-marca { background: var(--turquesa); color: #04282a; }
+.btn-azul { background: var(--azul); color: var(--sobre-marca); }
+.btn-borde { background: transparent; border-color: var(--borde); color: var(--texto); }
+.voz .btn-borde { border-color: rgba(255, 255, 255, 0.35); color: #ffffff; }
+.btn-peligro { background: transparent; border-color: var(--peligro); color: var(--peligro); }
+.btn[disabled] { opacity: 0.55; cursor: default; }
+
+/* Agregar */
+.agregar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-block: 16px; }
+.agregar button { display: grid; gap: 4px; justify-items: start; text-align: left; padding: 14px; border-radius: var(--radio); border: 1px solid var(--borde); background: var(--superficie); min-width: 0; }
+.agregar button svg { width: 26px; height: 26px; color: var(--azul); }
+.agregar b { font-family: var(--f-titulo); font-size: var(--t-base); color: var(--titulo); }
+.agregar span { font-size: var(--t-xs); color: var(--texto-2); line-height: 1.35; }
+
+.rotulo { margin: 24px 0 8px; font-size: var(--t-xs); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--texto-2); }
+
+/* Biblioteca */
+.lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; padding-bottom: 32px; }
+.doc { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; background: var(--superficie); border: 1px solid var(--borde); border-radius: var(--radio); padding: 12px 8px 12px 14px; }
+.doc .abrir { display: grid; gap: 4px; text-align: left; background: none; border: 0; padding: 0; min-width: 0; }
+.doc .t { font-family: var(--f-titulo); font-weight: 700; color: var(--titulo); font-size: var(--t-base); line-height: 1.3; overflow-wrap: anywhere; }
+.doc .m { font-size: var(--t-xs); color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.doc .progreso { height: 4px; border-radius: 2px; background: var(--superficie-2); overflow: hidden; margin-top: 4px; }
+.doc .progreso > i { display: block; height: 100%; background: var(--turquesa); }
+.chip { display: inline-block; font-size: 0.6875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 7px; border-radius: 999px; background: var(--nota); color: var(--texto); margin-right: 6px; vertical-align: 1px; }
+.borrar-doc { display: flex; gap: 6px; align-items: center; }
+.borrar-doc .icono-btn { border: 0; background: transparent; color: var(--texto-2); }
+.borrar-doc .si { font-size: var(--t-xs); padding: 6px 10px; min-height: 36px; }
+.vacio { padding: 20px; text-align: center; color: var(--texto-2); border: 1px dashed var(--borde); border-radius: var(--radio); }
+
+/* Lector */
+.barra-lector { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--fondo); display: flex; align-items: center; gap: 8px; padding-block: 8px; border-bottom: 1px solid var(--borde); }
+.barra-lector .titulo-doc { flex: 1; min-width: 0; font-family: var(--f-titulo); font-weight: 700; color: var(--titulo); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.texto { font-size: var(--t-lectura); line-height: 1.75; padding-block: 16px 220px; }
+.texto .h { font-family: var(--f-titulo); font-weight: 900; color: var(--titulo); font-size: var(--t-h3); line-height: 1.3; margin: 1.4em 0 0.4em; text-wrap: balance; }
+.texto .h:first-child { margin-top: 0.4em; font-size: var(--t-h1); line-height: 1.15; }
+.texto .p { margin: 0 0 0.9em; max-width: 65ch; }
+.texto .li { margin: 0 0 0.5em; padding-left: 1.4em; position: relative; max-width: 65ch; }
+.texto .li::before { content: ""; position: absolute; left: 0.35em; top: 0.75em; width: 6px; height: 6px; border-radius: 50%; background: var(--turquesa); }
+.texto .q { margin: 0 0 0.9em; padding-left: 14px; border-left: 3px solid var(--rosa); color: var(--texto-2); max-width: 65ch; }
+.or { cursor: pointer; border-radius: 4px; transition: background-color 0.15s; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.or:hover { background: var(--superficie-2); }
+.or.actual { background: var(--resalte); color: var(--resalte-texto); padding: 1px 2px; margin: -1px -2px; }
+
+/* Reproductor */
+.reproductor { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; background: var(--superficie); border-top: 1px solid var(--borde); box-shadow: var(--sombra); padding-bottom: env(safe-area-inset-bottom, 0px); }
+.reproductor .avance { height: 4px; background: var(--superficie-2); }
+.reproductor .avance > i { display: block; height: 100%; width: 0; background: var(--turquesa); }
+.controles { max-width: 42rem; margin: 0 auto; padding: 10px 16px 6px; display: grid; grid-template-columns: 1fr auto auto auto 1fr; align-items: center; gap: 10px; }
+.vel { justify-self: start; min-width: 64px; min-height: 40px; border-radius: 999px; border: 1px solid var(--borde); background: transparent; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--texto); }
+.salto { width: 48px; height: 48px; border-radius: 50%; border: 0; background: transparent; color: var(--titulo); display: grid; place-items: center; }
+.salto svg { width: 28px; height: 28px; }
+.play { width: 64px; height: 64px; border-radius: 50%; border: 0; background: var(--azul); color: var(--sobre-marca); display: grid; place-items: center; box-shadow: 0 6px 16px rgba(59, 108, 167, 0.35); }
+.play svg { width: 30px; height: 30px; }
+.tiempo { justify-self: end; font-size: var(--t-xs); color: var(--texto-2); text-align: right; font-variant-numeric: tabular-nums; line-height: 1.3; }
+.aviso-rep { max-width: 42rem; margin: 0 auto; padding: 0 16px 10px; font-size: var(--t-xs); color: var(--texto-2); text-align: center; min-height: 1.2em; }
+.aviso-rep b { color: var(--acento-texto); font-weight: 600; }
+.preparar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; max-width: 42rem; margin: 0 auto; padding: 0 16px 10px; }
+.preparar .btn { min-height: 34px; padding: 6px 12px; font-size: var(--t-xs); }
+
+/* Hojas (paneles) */
+.velo { position: fixed; inset: 0; z-index: 20; background: rgba(13, 24, 38, 0.55); display: grid; align-items: end; justify-items: center; }
+.hoja { width: 100%; max-width: 42rem; max-height: 92vh; overflow: auto; background: var(--superficie); border-radius: 20px 20px 0 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom, 0px)); box-shadow: var(--sombra); }
+@media (min-width: 700px) { .velo { align-items: center; } .hoja { border-radius: 20px; } }
+.hoja h2 { margin: 0 0 4px; font-family: var(--f-titulo); font-weight: 900; color: var(--titulo); font-size: var(--t-h2); }
+.hoja h3 { margin: 20px 0 8px; font-family: var(--f-titulo); font-weight: 700; color: var(--titulo); font-size: var(--t-base); }
+.hoja p { margin: 0 0 10px; color: var(--texto-2); font-size: var(--t-sm); }
+.hoja label { display: block; font-size: var(--t-sm); font-weight: 600; margin: 12px 0 6px; }
+.hoja input[type="text"], .hoja textarea, .hoja select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--borde); background: var(--fondo); }
+.hoja textarea { min-height: 38vh; resize: vertical; line-height: 1.5; }
+.fila { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; justify-content: flex-end; }
+.hoja .opcion { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: start; padding: 12px; border: 1px solid var(--borde); border-radius: 12px; margin: 0 0 8px; font-weight: 400; }
+.opcion input { margin-top: 4px; width: 20px; height: 20px; accent-color: var(--azul); }
+.opcion b { font-weight: 600; }
+.opcion small { display: block; grid-column: 2; color: var(--texto-2); font-size: var(--t-xs); }
+.opcion .acciones-voz { grid-column: 2; display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.opcion .acciones-voz .btn { min-height: 34px; padding: 6px 12px; font-size: var(--t-xs); }
+.ayuda { background: var(--nota); border-radius: 12px; padding: 12px 14px; font-size: var(--t-sm); color: var(--texto); }
+.ayuda p { color: var(--texto); }
+
+/* Avisos */
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); z-index: 30; max-width: min(92vw, 30rem); background: var(--titulo); color: var(--fondo); padding: 10px 16px; border-radius: 12px; font-size: var(--t-sm); box-shadow: var(--sombra); }
+.cargando { position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; background: rgba(13, 24, 38, 0.45); }
+.cargando div { background: var(--superficie); padding: 18px 22px; border-radius: 14px; display: flex; gap: 12px; align-items: center; box-shadow: var(--sombra); max-width: 90vw; }
+.giro { width: 22px; height: 22px; border-radius: 50%; border: 3px solid var(--superficie-2); border-top-color: var(--turquesa); animation: giro 0.9s linear infinite; flex: none; }
+@keyframes giro { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .giro { animation-duration: 3s; } .or, .barra > i { transition: none; } }
+.con-reproductor .toast { bottom: calc(160px + env(safe-area-inset-bottom, 0px)); }
+@media (max-width: 380px) { .agregar { grid-template-columns: 1fr; } .controles { gap: 4px; } }
+</style>
+
+<div class="franja"></div>
+
+<main id="vista-biblioteca" class="marco">
+  <header class="cabeza">
+    <div class="crece">
+      <h1>Wakanda Escucha</h1>
+      <p>Tus documentos en voz alta, también con la pantalla apagada.</p>
+    </div>
+    <button class="icono-btn" id="btn-ajustes" aria-label="Ajustes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    </button>
+  </header>
+
+  <section class="voz" id="tarjeta-voz" aria-live="polite">
+    <h2 id="voz-titulo">Descarga la voz para escuchar en la calle</h2>
+    <p id="voz-texto">Se descarga una sola vez (unos 75 MB, mejor con WiFi). Después la voz se genera dentro de tu celular: tus documentos no salen de aquí y la lectura sigue con la pantalla bloqueada.</p>
+    <div class="barra" id="voz-barra" hidden><i></i></div>
+    <div class="acciones">
+      <button class="btn btn-marca" id="btn-descargar-voz">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>
+        <span>Descargar voz</span>
+      </button>
+      <span class="estado-voz" id="voz-estado"><i class="punto"></i><span>Mientras tanto se usa la voz del celular</span></span>
+    </div>
+  </section>
+
+  <div class="agregar">
+    <button id="btn-archivo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 18v-6M9 15l3-3 3 3"/></svg>
+      <b>Abrir archivo</b>
+      <span>PDF, Word (.docx), texto o exportación de Notion (.md, .html, .zip)</span>
+    </button>
+    <button id="btn-pegar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/></svg>
+      <b>Pegar texto</b>
+      <span>Notion, una página web, un correo o lo que hayas copiado</span>
+    </button>
+  </div>
+  <input type="file" id="entrada-archivo" hidden multiple accept=".pdf,.docx,.txt,.md,.markdown,.html,.htm,.zip,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown,text/html,application/zip">
+
+  <h2 class="rotulo">Tu biblioteca</h2>
+  <ul class="lista" id="lista"></ul>
+</main>
+
+<main id="vista-lector" class="marco" hidden>
+  <div class="barra-lector">
+    <button class="icono-btn" id="btn-volver" aria-label="Volver a la biblioteca">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <div class="titulo-doc" id="titulo-doc"></div>
+    <button class="icono-btn" id="btn-ajustes-2" aria-label="Ajustes">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    </button>
+  </div>
+  <article class="texto" id="texto"></article>
+</main>
+
+<div class="reproductor" id="reproductor" hidden>
+  <div class="avance"><i id="avance"></i></div>
+  <div class="controles">
+    <button class="vel" id="btn-vel" aria-label="Cambiar velocidad">1×</button>
+    <button class="salto" id="btn-atras" aria-label="Frase anterior">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h2v14H6zM20 5v14L9 12z"/></svg>
+    </button>
+    <button class="play" id="btn-play" aria-label="Reproducir">
+      <svg id="ico-play" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      <svg id="ico-pausa" viewBox="0 0 24 24" fill="currentColor" hidden><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>
+    </button>
+    <button class="salto" id="btn-adelante" aria-label="Frase siguiente">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 5h2v14h-2zM4 5v14l11-7z"/></svg>
+    </button>
+    <div class="tiempo" id="tiempo"></div>
+  </div>
+  <div class="preparar" id="zona-preparar">
+    <button class="btn btn-borde" id="btn-preparar">Preparar audio completo</button>
+  </div>
+  <div class="aviso-rep" id="aviso-rep"></div>
+</div>
+
+<div class="velo" id="hoja-pegar" hidden>
+  <div class="hoja" role="dialog" aria-modal="true" aria-labelledby="pegar-titulo">
+    <h2 id="pegar-titulo">Pegar texto</h2>
+    <p>Copia el contenido (de Notion, una página web o un correo) y pégalo aquí. Si copias desde Notion se conservan los títulos y las listas.</p>
+    <label for="pegar-nombre">Nombre</label>
+    <input type="text" id="pegar-nombre" placeholder="Por ejemplo: Propuesta hotel Cartagena" autocomplete="off">
+    <label for="pegar-area">Texto</label>
+    <textarea id="pegar-area" placeholder="Pega aquí el texto"></textarea>
+    <div class="fila">
+      <button class="btn btn-borde" id="pegar-cancelar">Cancelar</button>
+      <button class="btn btn-azul" id="pegar-guardar">Guardar y escuchar</button>
+    </div>
+  </div>
+</div>
+
+<div class="velo" id="hoja-ajustes" hidden>
+  <div class="hoja" role="dialog" aria-modal="true" aria-labelledby="ajustes-titulo">
+    <h2 id="ajustes-titulo">Ajustes</h2>
+    <h3>Voz</h3>
+    <div id="opciones-voz"></div>
+    <div id="bloque-voz-celular">
+      <label for="sel-voz-celular">Voz del celular</label>
+      <select id="sel-voz-celular"></select>
+      <p>La voz del celular no necesita descarga, pero en muchos teléfonos se detiene al bloquear la pantalla.</p>
+    </div>
+    <h3>Pantalla</h3>
+    <label class="opcion" for="chk-pantalla">
+      <input type="checkbox" id="chk-pantalla">
+      <b>Mantener la pantalla encendida mientras escucho</b>
+      <small>Útil con la voz del celular. Con la voz Wakanda no hace falta.</small>
+    </label>
+    <h3>Espacio</h3>
+    <p id="info-espacio">Calculando…</p>
+    <button class="btn btn-borde" id="btn-borrar-audios">Borrar audios generados</button>
+    <h3>Con la pantalla apagada</h3>
+    <div class="ayuda">
+      <p>Con la voz Wakanda, dale reproducir y bloquea el celular: la lectura sigue y la controlas desde la pantalla de bloqueo o los audífonos.</p>
+      <p>Si el documento es largo y vas a salir, toca «Preparar audio completo» antes. Así todo queda generado y guardado en el celular.</p>
+    </div>
+    <div class="fila">
+      <button class="btn btn-azul" id="ajustes-cerrar">Listo</button>
+    </div>
+  </div>
+</div>
+
+<div class="cargando" id="cargando" hidden><div><span class="giro"></span><span id="cargando-texto">Leyendo archivo…</span></div></div>
+<div class="toast" id="toast" role="status" hidden></div>
+<audio id="audio" preload="auto" playsinline></audio>
+
+<script>
+'use strict';
+// ───────────────────────── Utilidades ─────────────────────────
+const $ = (id) => document.getElementById(id);
+const esperarFrame = () => new Promise((r) => setTimeout(r, 0));
+let temporizadorToast = 0;
+function avisar(texto, ms = 4200) {
+  const t = $('toast');
+  t.textContent = texto;
+  t.hidden = false;
+  clearTimeout(temporizadorToast);
+  temporizadorToast = setTimeout(() => { t.hidden = true; }, ms);
+}
+function cargando(texto) {
+  $('cargando').hidden = !texto;
+  if (texto) $('cargando-texto').textContent = texto;
+}
+const local = {
+  leer(k, d) { try { const v = localStorage.getItem('we:' + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  guardar(k, v) { try { localStorage.setItem('we:' + k, JSON.stringify(v)); } catch (e) {} },
+};
+function hash(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36); }
+function nuevoId() { return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+function minutos(seg) {
+  if (!isFinite(seg) || seg <= 0) return '';
+  const m = Math.round(seg / 60);
+  if (m < 1) return 'menos de 1 min';
+  if (m < 60) return m + ' min';
+  const h = Math.floor(m / 60), r = m % 60;
+  return h + ' h' + (r ? ' ' + r + ' min' : '');
+}
+function numero(n, dec = 1) { return n.toLocaleString('es-CO', { maximumFractionDigits: dec }); }
+
+// ───────────────────────── Almacenamiento (IndexedDB con respaldo en memoria) ─────────────────────────
+const BD = (() => {
+  let promesa = null;
+  const memoria = { docs: new Map(), voces: new Map(), audio: new Map() };
+  let enMemoria = false;
+  function abrir() {
+    if (!promesa) {
+      promesa = new Promise((res, rej) => {
+        try {
+          const r = indexedDB.open('wakanda-escucha', 1);
+          r.onupgradeneeded = () => {
+            const d = r.result;
+            d.createObjectStore('docs', { keyPath: 'id' });
+            d.createObjectStore('voces');
+            d.createObjectStore('audio');
+          };
+          r.onsuccess = () => res(r.result);
+          r.onerror = () => rej(r.error);
+          r.onblocked = () => rej(new Error('bloqueado'));
+        } catch (e) { rej(e); }
+      }).catch(() => { enMemoria = true; return null; });
+    }
+    return promesa;
+  }
+  async function op(almacen, modo, fn) {
+    const d = await abrir();
+    if (!d) return fn(null, memoria[almacen]);
+    return new Promise((res, rej) => {
+      let t;
+      try { t = d.transaction(almacen, modo); } catch (e) { rej(e); return; }
+      const r = fn(t.objectStore(almacen));
+      t.oncomplete = () => res(r && typeof r === 'object' && 'result' in r ? r.result : undefined);
+      t.onerror = () => rej(t.error);
+      t.onabort = () => rej(t.error || new Error('abortado'));
+    });
+  }
+  const enRango = (k, desde, hasta) => k >= desde && k <= hasta;
+  return {
+    get enMemoria() { return enMemoria; },
+    leer: (a, k) => op(a, 'readonly', (s, m) => (s ? s.get(k) : { result: m.get(k) })),
+    guardar: (a, v, k) => op(a, 'readwrite', (s, m) => {
+      if (s) return k === undefined ? s.put(v) : s.put(v, k);
+      m.set(k === undefined ? v.id : k, v);
+    }),
+    borrar: (a, k) => op(a, 'readwrite', (s, m) => (s ? s.delete(k) : m.delete(k))),
+    todos: (a) => op(a, 'readonly', (s, m) => (s ? s.getAll() : { result: [...m.values()] })),
+    claves: (a, desde, hasta) => op(a, 'readonly', (s, m) =>
+      s ? s.getAllKeys(IDBKeyRange.bound(desde, hasta)) : { result: [...m.keys()].filter((k) => enRango(k, desde, hasta)) }),
+    borrarRango: (a, desde, hasta) => op(a, 'readwrite', (s, m) => {
+      if (s) return s.delete(IDBKeyRange.bound(desde, hasta));
+      for (const k of [...m.keys()]) if (enRango(k, desde, hasta)) m.delete(k);
+    }),
+    vaciar: (a) => op(a, 'readwrite', (s, m) => (s ? s.clear() : m.clear())),
+  };
+})();
+
+// ───────────────────────── Librerías bajo demanda ─────────────────────────
+const LIBS = {
+  pdf: 'lib/pdfjs-dist@3.11.174/build/pdf.min.js',
+  pdfWorker: 'lib/pdfjs-dist@3.11.174/build/pdf.worker.min.js',
+  mammoth: 'lib/mammoth@1.6.0/mammoth.browser.min.js',
+  jszip: 'lib/jszip@3.10.1/dist/jszip.min.js',
+};
+const cargadas = {};
+function cargarScript(url) {
+  if (!cargadas[url]) {
+    cargadas[url] = new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = url;
+      s.onload = res;
+      s.onerror = () => { delete cargadas[url]; rej(new Error('No se pudo cargar una pieza de la app. Revisa tu conexión e inténtalo de nuevo.')); };
+      document.head.appendChild(s);
+    });
+  }
+  return cargadas[url];
+}
+
+// ───────────────────────── Texto → bloques ─────────────────────────
+// Un bloque es {t: 'h' (título) | 'p' (párrafo) | 'li' (lista) | 'q' (cita), x: texto}
+const limpiar = (s) => s.replace(/[   ]/g, ' ').replace(/[ \t\r\f\v]+/g, ' ').replace(/ *\n */g, '\n').trim();
+const tieneLetras = (s) => /[\p{L}\p{N}]/u.test(s);
+
+const BLOQUES = new Set(['address', 'article', 'aside', 'blockquote', 'details', 'dialog', 'dd', 'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hr', 'li', 'main', 'nav', 'ol', 'p', 'pre', 'section', 'summary', 'table', 'tbody', 'thead', 'tfoot', 'tr', 'td', 'th', 'ul', 'caption']);
+const SELECTOR_BLOQUES = [...BLOQUES].join(',');
+
+function bloquesDesdeHTML(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  doc.querySelectorAll('script,style,noscript,template,svg,canvas,nav,form,button,iframe,object,embed,select,input,textarea,img,video,audio,[aria-hidden="true"],[hidden]').forEach((n) => n.remove());
+  doc.querySelectorAll('br').forEach((b) => b.replaceWith('\n'));
+  const raiz = doc.querySelector('article .page-body') || doc.querySelector('article') || doc.querySelector('main') || doc.body;
+  const sinRuido = raiz === doc.body;
+  if (sinRuido) doc.querySelectorAll('body > header, body > footer, body > aside').forEach((n) => n.remove());
+  const salida = [];
+  const notionTitulo = doc.querySelector('article header .page-title, h1.page-title');
+  if (notionTitulo && tieneLetras(notionTitulo.textContent)) salida.push({ t: 'h', x: limpiar(notionTitulo.textContent) });
+
+  function agregar(t, x) {
+    for (const linea of limpiar(x).split('\n')) {
+      const l = linea.trim();
+      if (l && tieneLetras(l)) salida.push({ t, x: l });
+    }
+  }
+  function recorrer(el, tipo) {
+    let enLinea = '';
+    const soltar = () => { if (enLinea.trim()) agregar(tipo, enLinea); enLinea = ''; };
+    for (const n of el.childNodes) {
+      if (n.nodeType === 3) { enLinea += n.nodeValue; continue; }
+      if (n.nodeType !== 1) continue;
+      const tag = n.localName;
+      if (!BLOQUES.has(tag)) {
+        if (n.querySelector(SELECTOR_BLOQUES)) { soltar(); recorrer(n, tipo); } else enLinea += n.textContent;
+        continue;
+      }
+      soltar();
+      if (notionTitulo && (n === notionTitulo || n.contains(notionTitulo))) continue;
+      if (/^h[1-6]$/.test(tag) || tag === 'summary' || tag === 'caption') agregar('h', n.textContent);
+      else if (tag === 'tr') {
+        const celdas = [...n.children].map((c) => limpiar(c.textContent).replace(/\n/g, ' ')).filter(tieneLetras);
+        if (celdas.length) agregar('p', celdas.join(', ') + '.');
+      } else if (tag === 'li') recorrer(n, 'li');
+      else if (tag === 'blockquote') recorrer(n, 'q');
+      else if (tag === 'hr') continue;
+      else if (n.querySelector(SELECTOR_BLOQUES)) recorrer(n, tipo);
+      else agregar(tipo === 'li' || tipo === 'q' ? tipo : 'p', n.textContent);
+    }
+    soltar();
+  }
+  recorrer(raiz, 'p');
+  return salida;
+}
+
+function limpiarMarkdownEnLinea(s) {
+  return s
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/<https?:[^>]+>/g, ' ')
+    .replace(/<\/?[a-zA-Z][^>]*>/g, ' ')
+    .replace(/(\*\*|__)(.+?)\1/g, '$2')
+    .replace(/(^|[\s(])[*_](\S[^*_]*?)[*_](?=[\s).,;:!?]|$)/g, '$1$2')
+    .replace(/`([^`]+)`/g, '$1')
+    .replace(/~~(.+?)~~/g, '$1')
+    .replace(/\[\^?\d+\]/g, '');
+}
+
+// Para texto pegado: cada salto de línea suele ser un bloque (así copia Notion),
+// salvo que el texto venga cortado a ancho fijo (líneas largas sin puntuación final).
+function pareceCortadoAAncho(lineas) {
+  const utiles = lineas.filter((l) => l.trim());
+  if (utiles.length < 4) return false;
+  const cortadas = utiles.filter((l) => l.length >= 55 && l.length <= 100 && !/[.:;!?…)"»]$/.test(l.trim()));
+  return cortadas.length / utiles.length >= 0.5;
+}
+
+function bloquesDesdeMarkdown(md, { saltoEsBloque = false } = {}) {
+  const lineas = md.replace(/\r\n?/g, '\n').split('\n');
+  const unir = !saltoEsBloque || pareceCortadoAAncho(lineas);
+  const salida = [];
+  let parrafo = [];
+  let enCodigo = false;
+  const soltar = () => {
+    if (parrafo.length) {
+      const x = limpiarMarkdownEnLinea(parrafo.join(' ').replace(/(\p{L})- (\p{Ll})/gu, '$1$2'));
+      if (tieneLetras(x)) salida.push({ t: 'p', x: limpiar(x) });
+    }
+    parrafo = [];
+  };
+  const poner = (t, x) => { x = limpiar(limpiarMarkdownEnLinea(x)); if (tieneLetras(x)) salida.push({ t, x }); };
+  for (const crudo of lineas) {
+    const l = crudo.replace(/\t/g, '    ');
+    if (/^\s*(```|~~~)/.test(l)) { soltar(); enCodigo = !enCodigo; continue; }
+    if (enCodigo) continue;
+    if (!l.trim()) { soltar(); continue; }
+    let m;
+    if ((m = l.match(/^\s{0,3}(#{1,6})\s+(.*?)\s*#*\s*$/))) { soltar(); poner('h', m[2]); continue; }
+    if (/^\s*([-*_])(\s*\1){2,}\s*$/.test(l)) { soltar(); continue; }
+    if (/^\s*\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?\s*$/.test(l)) continue;
+    if ((m = l.match(/^\s*\|(.*)\|\s*$/))) {
+      soltar();
+      const celdas = m[1].split('|').map((c) => limpiarMarkdownEnLinea(c).trim()).filter(tieneLetras);
+      if (celdas.length) poner('p', celdas.join(', ') + '.');
+      continue;
+    }
+    if ((m = l.match(/^\s*(?:[-*+•▪◦●–]|\d{1,3}[.)])\s+(?:\[[ xX]\]\s+)?(.*)$/))) { soltar(); poner('li', m[1]); continue; }
+    if ((m = l.match(/^\s*>\s?(.*)$/))) { soltar(); poner('q', m[1]); continue; }
+    if (unir) parrafo.push(l.trim());
+    else { soltar(); poner('p', l); }
+  }
+  soltar();
+  return salida;
+}
+
+// Encabezados y pies que se repiten idénticos en cada página, y los números de página, no se leen.
+const NUMERO_PAGINA = /^[-–—\s]*(p[áa]g(ina)?\.?|page)?\s*\d{1,4}\s*((de|of|\/)\s*\d{1,4})?[-–—\s]*$/i;
+const MENCIONA_PAGINA = /p[áa]g(ina)?\.?\s*\d|page\s*\d|\b\d{1,4}\s*(de|of|\/)\s*\d{1,4}\s*$/i;
+function quitarEncabezadosRepetidos(paginas) {
+  const bordes = (lineas) => [...new Set([...lineas.slice(0, 2), ...lineas.slice(-2)])];
+  const exacta = new Map(), parecida = new Map();
+  const normal = (t) => t.toLowerCase().replace(/\d+/g, '#').replace(/\s+/g, ' ').trim();
+  for (const lineas of paginas) {
+    const vistas = new Set(), vistasN = new Set();
+    for (const l of bordes(lineas)) { vistas.add(l.texto); vistasN.add(normal(l.texto)); }
+    for (const k of vistas) exacta.set(k, (exacta.get(k) || 0) + 1);
+    for (const k of vistasN) parecida.set(k, (parecida.get(k) || 0) + 1);
+  }
+  const umbral = Math.max(2, Math.ceil(paginas.length * 0.5));
+  return paginas.map((lineas) => lineas.filter((l, i) => {
+    const enBorde = i < 2 || i >= lineas.length - 2;
+    if (!enBorde) return true;
+    if (NUMERO_PAGINA.test(l.texto)) return false;
+    if (paginas.length >= 3 && (exacta.get(l.texto) || 0) >= umbral) return false;
+    if (paginas.length >= 3 && MENCIONA_PAGINA.test(l.texto) && (parecida.get(normal(l.texto)) || 0) >= umbral) return false;
+    return true;
+  }));
+}
+
+async function bloquesDesdePDF(buffer, progreso) {
+  await cargarScript(LIBS.pdf);
+  const pdfjs = window.pdfjsLib;
+  pdfjs.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
+  const pdf = await pdfjs.getDocument({ data: new Uint8Array(buffer), isEvalSupported: false, disableFontFace: true, useSystemFonts: false }).promise;
+  const paginas = [];
+  for (let p = 1; p <= pdf.numPages; p++) {
+    progreso && progreso(`Leyendo página ${p} de ${pdf.numPages}…`);
+    const pagina = await pdf.getPage(p);
+    const contenido = await pagina.getTextContent();
+    const lineas = [];
+    let actual = null;
+    for (const it of contenido.items) {
+      if (!('str' in it)) continue;
+      const [, , c, d, x, y] = it.transform;
+      const alto = Math.hypot(c, d) || it.height || 10;
+      if (!it.str) { if (it.hasEOL) actual = null; continue; }
+      if (!actual || Math.abs(y - actual.y) > alto * 0.6) {
+        actual = { y, x, alto, texto: '', finX: x };
+        lineas.push(actual);
+      } else if (x > actual.finX + alto * 0.12 && !/\s$/.test(actual.texto) && !/^\s/.test(it.str)) {
+        actual.texto += ' ';
+      }
+      actual.texto += it.str;
+      actual.finX = x + (it.width || 0);
+      actual.alto = Math.max(actual.alto, alto);
+      if (it.hasEOL) actual = null;
+    }
+    paginas.push(lineas.map((l) => ({ ...l, texto: limpiar(l.texto) })).filter((l) => l.texto && tieneLetras(l.texto)));
+    pagina.cleanup();
+  }
+  const limpias = quitarEncabezadosRepetidos(paginas);
+  const altos = limpias.flat().flatMap((l) => Array(Math.min(20, Math.ceil(l.texto.length / 10))).fill(Math.round(l.alto * 2) / 2)).sort((a, b) => a - b);
+  const altoCuerpo = altos.length ? altos[Math.floor(altos.length / 2)] : 10;
+  const salida = [];
+  let bloque = null;
+  const cerrar = () => { if (bloque && tieneLetras(bloque.x)) salida.push({ t: bloque.t, x: limpiar(bloque.x) }); bloque = null; };
+  for (const lineas of limpias) {
+    let previa = null;
+    for (const l of lineas) {
+      const esTitulo = l.alto >= altoCuerpo * 1.22 && l.texto.length < 140;
+      const vineta = l.texto.match(/^([•▪◦●■□➢►\-–]|\d{1,2}[.)])\s+(.*)$/);
+      const salto = previa ? previa.y - l.y : 0;
+      const separado = !previa || salto < 0 || salto > Math.max(previa.alto, l.alto) * 1.75;
+      if (esTitulo) {
+        if (bloque && bloque.t === 'h' && !separado && bloque.x.length < 140) { bloque.x += ' ' + l.texto; }
+        else { cerrar(); bloque = { t: 'h', x: l.texto }; }
+      } else if (vineta) {
+        cerrar(); bloque = { t: 'li', x: vineta[2] };
+      } else if (!bloque || bloque.t === 'h' || separado) {
+        const continua = bloque && bloque.t !== 'h' && !previa && !/[.:;!?…]$/.test(bloque.x) && /^\p{Ll}/u.test(l.texto);
+        if (continua) bloque.x += ' ' + l.texto;
+        else { cerrar(); bloque = { t: 'p', x: l.texto }; }
+      } else if (/\p{L}-$/u.test(bloque.x) && /^\p{Ll}/u.test(l.texto)) {
+        bloque.x = bloque.x.slice(0, -1) + l.texto;
+      } else {
+        bloque.x += ' ' + l.texto;
+      }
+      previa = l;
+    }
+  }
+  cerrar();
+  return { bloques: salida, paginas: pdf.numPages };
+}
+
+async function bloquesDesdeDOCX(buffer) {
+  await cargarScript(LIBS.mammoth);
+  const r = await window.mammoth.convertToHtml({ arrayBuffer: buffer });
+  return bloquesDesdeHTML(r.value);
+}
+
+// Los nombres que exporta Notion terminan en un identificador de 32 caracteres.
+function nombreBonito(nombre) {
+  return nombre.replace(/^.*\//, '').replace(/\.[^.]+$/, '').replace(/\s+[0-9a-f]{32}$/i, '').replace(/[_]+/g, ' ').trim() || 'Documento';
+}
+
+async function documentosDesdeZip(buffer, profundidad = 0) {
+  await cargarScript(LIBS.jszip);
+  const zip = await window.JSZip.loadAsync(buffer);
+  const docs = [];
+  const archivos = Object.values(zip.files).filter((f) => !f.dir && !/(^|\/)(__MACOSX|\.)/.test(f.name));
+  archivos.sort((a, b) => a.name.split('/').length - b.name.split('/').length || a.name.localeCompare(b.name));
+  for (const f of archivos) {
+    const ext = (f.name.match(/\.([a-z0-9]+)$/i) || [])[1]?.toLowerCase();
+    try {
+      if (ext === 'zip' && profundidad < 2) docs.push(...await documentosDesdeZip(await f.async('arraybuffer'), profundidad + 1));
+      else if (ext === 'md' || ext === 'markdown') docs.push({ titulo: nombreBonito(f.name), origen: 'Notion', bloques: bloquesDesdeMarkdown(await f.async('string')) });
+      else if (ext === 'html' || ext === 'htm') docs.push({ titulo: nombreBonito(f.name), origen: 'Notion', bloques: bloquesDesdeHTML(await f.async('string')) });
+      else if (ext === 'txt') docs.push({ titulo: nombreBonito(f.name), origen: 'Texto', bloques: bloquesDesdeMarkdown(await f.async('string'), { saltoEsBloque: true }) });
+      else if (ext === 'pdf') { const r = await bloquesDesdePDF(await f.async('arraybuffer')); docs.push({ titulo: nombreBonito(f.name), origen: 'PDF', bloques: r.bloques, detalle: r.paginas + ' págs.' }); }
+      else if (ext === 'docx') docs.push({ titulo: nombreBonito(f.name), origen: 'Word', bloques: await bloquesDesdeDOCX(await f.async('arraybuffer')) });
+    } catch (e) { console.warn('No se pudo leer', f.name, e); }
+  }
+  return docs.filter((d) => d.bloques.length);
+}
+
+// ───────────────────────── Bloques → frases ─────────────────────────
+const segmentador = typeof Intl !== 'undefined' && Intl.Segmenter ? new Intl.Segmenter('es', { granularity: 'sentence' }) : null;
+const ABREVIATURAS = /(?:^|\s)(sr|sra|srta|dr|dra|lic|ing|arq|prof|av|cra|cl|no|núm|num|art|pág|págs|tel|cel|aprox|etc|ej|vs|ud|uds|dto|depto|mín|máx|hrs?|min|p\.\s?m|a\.\s?m|ee\.\s?uu|s\.\s?a\.\s?s|s\.\s?a|ltda|vol|cap)\.$/i;
+function dividirLarga(frase, max = 260) {
+  const partes = [];
+  let resto = frase;
+  while (resto.length > max) {
+    const ventana = resto.slice(0, max);
+    let corte = Math.max(ventana.lastIndexOf('; '), ventana.lastIndexOf(': '));
+    if (corte < 80) corte = ventana.lastIndexOf(', ');
+    if (corte < 80) corte = ventana.lastIndexOf(' ');
+    if (corte < 40) corte = max;
+    partes.push(resto.slice(0, corte + 1).trim());
+    resto = resto.slice(corte + 1).trim();
+  }
+  if (resto) partes.push(resto);
+  return partes;
+}
+function frasesDe(texto) {
+  const salida = [];
+  for (const linea of texto.split(/\n+/)) {
+    let trozos = segmentador ? [...segmentador.segment(linea)].map((s) => s.segment) : linea.match(/[^.!?…]+(?:[.!?…]+["»”')\]]*|$)\s*/g) || [linea];
+    const unidas = [];
+    for (const t of trozos) {
+      const previa = unidas[unidas.length - 1];
+      const p = previa === undefined ? '' : previa.trim();
+      if (previa !== undefined && (ABREVIATURAS.test(p) || /(^|\s)\p{L}\.$/u.test(p) || p.length < 4 || !tieneLetras(t))) unidas[unidas.length - 1] = previa + t;
+      else unidas.push(t);
+    }
+    for (const u of unidas) for (const p of dividirLarga(u.trim())) if (tieneLetras(p)) salida.push(p);
+  }
+  return salida;
+}
+
+// ───────────────────────── Texto para decir en voz alta ─────────────────────────
+const MESES = ['', 'enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const NUM = '(\\d[\\d.,]*)';
+function paraDecir(t) {
+  return t
+    .replace(/[\p{Extended_Pictographic}\u{1F1E6}-\u{1F1FF}️‍⃣]/gu, ' ')
+    .replace(/https?:\/\/(?:www\.)?([^\/\s?#]+)\S*/gi, '$1')
+    .replace(/\bwww\.([^\/\s?#]+)\S*/gi, '$1')
+    .replace(/\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b/g, (m, d, mes, a) => {
+      const n = +mes;
+      if (n < 1 || n > 12 || +d < 1 || +d > 31) return m;
+      return `${+d} de ${MESES[n]} de ${a.length === 2 ? '20' + a : a}`;
+    })
+    .replace(new RegExp('\\b(?:USD|US\\$|U\\$S)\\s?' + NUM, 'gi'), '$1 dólares')
+    .replace(new RegExp(NUM + '\\s?(?:USD|US\\$)', 'gi'), '$1 dólares')
+    .replace(new RegExp('\\bCOP\\s?\\$?\\s?' + NUM, 'gi'), '$1 pesos')
+    .replace(new RegExp(NUM + '\\s?COP\\b', 'gi'), '$1 pesos')
+    .replace(new RegExp('€\\s?' + NUM, 'g'), '$1 euros')
+    .replace(new RegExp(NUM + '\\s?€', 'g'), '$1 euros')
+    .replace(new RegExp('\\$\\s?' + NUM, 'g'), '$1 pesos')
+    .replace(/(\d)\s?[xX×]\s?(\d)/g, '$1 por $2')
+    .replace(/#\s?(\d)/g, 'número $1')
+    .replace(/\bN[oº°]\.?\s?(\d)/g, 'número $1')
+    .replace(/\bCra\.?\s/g, 'carrera ')
+    .replace(/\bCll?\.?\s(?=\d)/g, 'calle ')
+    .replace(/\bAv\.\s/g, 'avenida ')
+    .replace(/\bSra\.\s/g, 'señora ')
+    .replace(/(\d)\s?km\b/g, '$1 kilómetros')
+    .replace(/(\d)\s?kg\b/g, '$1 kilos')
+    .replace(/(\p{L})\/(\p{L})/gu, '$1 o $2')
+    .replace(/[•●▪◦■□►▶➢→←⇒✓✔︎✗|*_~#>]/g, ' ')
+    .replace(/\s[–—]\s/g, ', ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function prepararDocumento({ titulo, origen, bloques, detalle, ejemplo }) {
+  const conFrases = [];
+  let total = 0, caracteres = 0;
+  for (const b of bloques) {
+    const o = frasesDe(b.x);
+    if (!o.length) continue;
+    conFrases.push({ t: b.t, o });
+    total += o.length;
+    caracteres += o.reduce((s, f) => s + f.length, 0);
+  }
+  const ahora = Date.now();
+  return { id: nuevoId(), titulo: (titulo || 'Documento').slice(0, 140), origen, detalle: detalle || '', bloques: conFrases, total, caracteres, pos: 0, creado: ahora, abierto: ahora, ejemplo: !!ejemplo };
+}
+
+// ───────────────────────── Voces Wakanda (Piper dentro del navegador) ─────────────────────────
+const VOCES = [
+  { id: 'es_MX-claude-high', nombre: 'Claude', detalle: 'Español de México · tono más agudo · calidad alta' },
+  { id: 'es_MX-ald-medium', nombre: 'Ald', detalle: 'Español de México · tono más grave · calidad media' },
+];
+const Motor = {
+  vozId: local.leer('voz', VOCES[0].id),
+  descargadas: new Set(),
+  worker: null,
+  listo: null,
+  frecuencia: 22050,
+  pendientes: new Map(),
+  siguienteId: 1,
+  fallo: '',
+  descargando: null,
+
+  async revisarDescargadas() {
+    for (const v of VOCES) {
+      try { const m = await BD.leer('voces', v.id + ':meta'); if (m) this.descargadas.add(v.id); } catch (e) {}
+    }
+  },
+  async manifiesto(id) {
+    const r = await fetch(`voces/${id}/voz.json`);
+    if (!r.ok) throw new Error('No se encontró la voz.');
+    return r.json();
+  },
+  // Descarga los trozos del modelo, los une, verifica la huella y los guarda.
+  async descargar(id, alProgreso) {
+    if (this.descargando) return this.descargando;
+    this.descargando = (async () => {
+      const m = await this.manifiesto(id);
+      const total = m.bytes;
+      const modelo = new Uint8Array(total);
+      let pos = 0;
+      for (const archivo of m.archivos) {
+        const r = await fetch(`voces/${id}/${archivo}`);
+        if (!r.ok || !r.body) throw new Error('La descarga se interrumpió. Inténtalo de nuevo.');
+        const lector = r.body.getReader();
+        for (;;) {
+          const { done, value } = await lector.read();
+          if (done) break;
+          if (pos + value.length > total) throw new Error('La voz descargada no coincide.');
+          modelo.set(value, pos);
+          pos += value.length;
+          alProgreso && alProgreso(pos / total);
+        }
+      }
+      if (pos !== total) throw new Error('La descarga quedó incompleta. Inténtalo de nuevo.');
+      if (crypto.subtle) {
+        const huella = [...new Uint8Array(await crypto.subtle.digest('SHA-256', modelo))].map((b) => b.toString(16).padStart(2, '0')).join('');
+        if (huella !== m.sha256) throw new Error('La voz llegó dañada. Inténtalo de nuevo.');
+      }
+      try {
+        await BD.guardar('voces', modelo.buffer, id + ':modelo');
+        await BD.guardar('voces', { ...m, guardada: Date.now() }, id + ':meta');
+        if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+      } catch (e) {
+        console.warn('No se pudo guardar la voz', e);
+      }
+      this.descargadas.add(id);
+      this._recienDescargada = { id, modelo: modelo.buffer, m };
+      return true;
+    })();
+    try { return await this.descargando; } finally { this.descargando = null; }
+  },
+  async borrarVoz(id) {
+    await BD.borrar('voces', id + ':modelo');
+    await BD.borrar('voces', id + ':meta');
+    this.descargadas.delete(id);
+    if (this.vozId === id) this.apagar();
+  },
+  apagar() {
+    if (this.worker) this.worker.terminate();
+    this.worker = null;
+    this.listo = null;
+    for (const p of this.pendientes.values()) p.rej(new Error('Motor detenido'));
+    this.pendientes.clear();
+  },
+  // Arranca el trabajador con el modelo de la voz elegida (una vez por sesión).
+  iniciar() {
+    if (this.listo) return this.listo;
+    const id = this.vozId;
+    this.listo = (async () => {
+      let modelo, m;
+      if (this._recienDescargada && this._recienDescargada.id === id) {
+        ({ modelo, m } = this._recienDescargada);
+        this._recienDescargada = null;
+      } else {
+        modelo = await BD.leer('voces', id + ':modelo');
+        m = await BD.leer('voces', id + ':meta');
+      }
+      if (!modelo || !m) { this.descargadas.delete(id); throw new Error('La voz no está descargada.'); }
+      const w = new Worker('voz-worker.js');
+      this.worker = w;
+      let arrancado = false;
+      w.onmessage = (e) => {
+        const d = e.data;
+        if (d.tipo === 'listo') { const p = this.pendientes.get('init'); this.pendientes.delete('init'); p && p.res(); return; }
+        const p = this.pendientes.get(d.id === undefined ? 'init' : d.id);
+        if (!p) return;
+        this.pendientes.delete(d.id === undefined ? 'init' : d.id);
+        if (d.tipo === 'error') p.rej(new Error(d.mensaje)); else p.res(d);
+      };
+      w.onerror = (e) => {
+        e.preventDefault && e.preventDefault();
+        if (arrancado) {
+          // Se cayó a mitad de camino (por ejemplo, sin memoria): se arranca de nuevo en la próxima frase.
+          if (this.worker === w) this.apagar(); else w.terminate();
+          return;
+        }
+        const err = new Error('El motor de voz no pudo arrancar en este navegador.');
+        for (const p of this.pendientes.values()) p.rej(err);
+        this.pendientes.clear();
+      };
+      const espera = new Promise((res, rej) => this.pendientes.set('init', { res, rej }));
+      w.postMessage({ tipo: 'iniciar', modelo, voz: { espeak: m.espeak, frecuencia: m.frecuencia, inferencia: m.inferencia } }, [modelo]);
+      await espera;
+      arrancado = true;
+      this.frecuencia = m.frecuencia;
+      this.fallo = '';
+    })();
+    this.listo.catch((e) => {
+      if (!/no está descargada/.test(e.message)) this.fallo = e.message;
+      this.apagar();
+      UI.tarjetaVoz();
+      if (Rep.doc) { Rep.elegirMotor(); UI.actualizarPreparar(); }
+    });
+    return this.listo;
+  },
+  async sintetizar(texto) {
+    await this.iniciar();
+    const id = this.siguienteId++;
+    const r = await new Promise((res, rej) => {
+      const vigilancia = setTimeout(() => {
+        if (!this.pendientes.has(id)) return;
+        this.pendientes.delete(id);
+        rej(new Error('El motor de voz dejó de responder.'));
+        this.apagar();
+      }, 90000);
+      this.pendientes.set(id, {
+        res: (d) => { clearTimeout(vigilancia); res(d); },
+        rej: (e) => { clearTimeout(vigilancia); rej(e); },
+      });
+      this.worker.postMessage({ tipo: 'sintetizar', id, texto });
+    });
+    const f = r.pcm;
+    const pcm = new Int16Array(f.length);
+    for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); pcm[i] = v < 0 ? v * 32768 : v * 32767; }
+    return pcm;
+  },
+};
+
+// WAV de 16 bits a partir de trozos PCM
+function crearWav(trozos, frecuencia) {
+  let muestras = 0;
+  for (const t of trozos) muestras += t.length;
+  const cab = new DataView(new ArrayBuffer(44));
+  const txt = (o, s) => { for (let i = 0; i < s.length; i++) cab.setUint8(o + i, s.charCodeAt(i)); };
+  txt(0, 'RIFF'); cab.setUint32(4, 36 + muestras * 2, true); txt(8, 'WAVE'); txt(12, 'fmt ');
+  cab.setUint32(16, 16, true); cab.setUint16(20, 1, true); cab.setUint16(22, 1, true);
+  cab.setUint32(24, frecuencia, true); cab.setUint32(28, frecuencia * 2, true); cab.setUint16(32, 2, true); cab.setUint16(34, 16, true);
+  txt(36, 'data'); cab.setUint32(40, muestras * 2, true);
+  return new Blob([cab.buffer, ...trozos], { type: 'audio/wav' });
+}
+const URL_SILENCIO = URL.createObjectURL(crearWav([new Int16Array(5512)], 22050));
+
+// ───────────────────────── Reproductor ─────────────────────────
+const audio = $('audio');
+const Rep = {
+  doc: null,
+  frases: [],          // [{b: índice de bloque, x: texto}]
+  i: 0,
+  sonando: false,
+  motor: 'wakanda',    // 'wakanda' | 'celular'
+  velocidad: local.leer('velocidad', 1),
+  token: 0,
+  clip: null,          // {desde, hasta, inicios:[seg], url}
+  memoria: new Map(),  // índice → {pcm, seg}
+  guardadas: new Set(),
+  enCurso: new Map(),
+  fallidas: new Set(),  // frases que no se pudieron generar: se saltan con un silencio corto
+  fallasSeguidas: 0,
+  msPorLetra: local.leer('msPorLetra', 25),
+  avisoEspacio: false,
+  cambiando: false,
+  generando: false,
+  preparando: false,
+  esperando: false,
+  cps: local.leer('cps', 14.5),
+
+  clave(k) { return `${this.doc.id}|${Motor.vozId}|${String(k).padStart(6, '0')}`; },
+  async abrir(doc) {
+    this.detener();
+    this.doc = doc;
+    this.frases = [];
+    doc.bloques.forEach((b, bi) => b.o.forEach((x) => this.frases.push({ b: bi, x })));
+    this.i = Math.min(doc.pos || 0, Math.max(0, this.frases.length - 1));
+    this.memoria.clear();
+    this.enCurso.clear();
+    this.fallidas.clear();
+    this.fallasSeguidas = 0;
+    this.preparando = false;
+    await this.cargarGuardadas();
+  },
+  async cargarGuardadas() {
+    this.guardadas = new Set();
+    this.fallidas = new Set();
+    if (!this.doc) return;
+    try {
+      const ks = await BD.claves('audio', `${this.doc.id}|${Motor.vozId}|`, `${this.doc.id}|${Motor.vozId}|￿`);
+      for (const k of ks) this.guardadas.add(parseInt(k.split('|')[2], 10));
+    } catch (e) {}
+    UI.actualizarPreparar();
+  },
+  elegirMotor() {
+    const puedeWakanda = Motor.descargadas.has(Motor.vozId) && !Motor.fallo;
+    this.motor = puedeWakanda ? 'wakanda' : 'celular';
+    return this.motor;
+  },
+  frasePausa(k) {
+    const f = this.frases[k], sig = this.frases[k + 1];
+    if (!sig) return 0;
+    if (sig.b !== f.b) return this.doc.bloques[f.b].t === 'h' ? 0.55 : 0.4;
+    return 0.12;
+  },
+  // Audio de una frase: memoria → guardado → generarlo
+  asegurar(k) {
+    if (this.memoria.has(k)) return Promise.resolve(this.memoria.get(k));
+    const clave = this.doc.id + '|' + k;
+    if (!this.enCurso.has(clave)) {
+      const p = this._asegurar(k).finally(() => this.enCurso.delete(clave));
+      this.enCurso.set(clave, p);
+    }
+    return this.enCurso.get(clave);
+  },
+  async _asegurar(k) {
+    const texto = paraDecir(this.frases[k].x);
+    const h = hash(texto);
+    const docId = this.doc.id;
+    if (this.guardadas.has(k)) {
+      try {
+        const g = await BD.leer('audio', this.clave(k));
+        if (g && g.h === h) {
+          const r = { pcm: new Int16Array(g.pcm), seg: g.pcm.byteLength / 2 / Motor.frecuencia };
+          if (this.doc && this.doc.id === docId) this.memoria.set(k, r);
+          return r;
+        }
+      } catch (e) {}
+    }
+    const inicio = performance.now();
+    let pcm;
+    if (!texto) pcm = new Int16Array(Math.round(Motor.frecuencia * 0.2));
+    else {
+      try {
+        pcm = await Motor.sintetizar(texto);
+      } catch (e) {
+        if (Motor.fallo) throw e;
+        try {
+          pcm = await Motor.sintetizar(texto);  // segundo intento, con el motor reiniciado si hizo falta
+        } catch (e2) {
+          if (Motor.fallo) throw e2;
+          console.warn('Frase omitida', k, e2);
+          this.fallasSeguidas++;
+          if (this.fallasSeguidas >= 3) throw new Error('La voz dejó de funcionar (' + e2.message + ')');
+          const r = { pcm: new Int16Array(Math.round(Motor.frecuencia * 0.3)), seg: 0.3 };
+          if (this.doc && this.doc.id === docId) { this.fallidas.add(k); this.memoria.set(k, r); this.revisarPreparado(); }
+          return r;
+        }
+      }
+    }
+    this.fallasSeguidas = 0;
+    const r = { pcm, seg: pcm.length / Motor.frecuencia };
+    if (!this.doc || this.doc.id !== docId) return r;
+    this.memoria.set(k, r);
+    const f = this.frases[k];
+    if (f && f.x.length > 6) {
+      this.cps = this.cps * 0.9 + (f.x.length / Math.max(0.3, r.seg)) * 0.1;
+      local.guardar('cps', Math.round(this.cps * 10) / 10);
+      this.msPorLetra = this.msPorLetra * 0.9 + ((performance.now() - inicio) / f.x.length) * 0.1;
+      local.guardar('msPorLetra', Math.round(this.msPorLetra * 10) / 10);
+    }
+    BD.guardar('audio', { h, pcm: pcm.buffer.slice(0) }, this.clave(k)).then(() => {
+      if (this.doc && this.doc.id === docId) { this.guardadas.add(k); this.revisarPreparado(); }
+    }).catch(() => {
+      // Sin espacio para guardar: se sigue generando mientras se escucha, pero no se puede preparar todo.
+      if (this.preparando) this.preparando = false;
+      if (!this.avisoEspacio) { this.avisoEspacio = true; avisar('No queda espacio en el celular para guardar todo el audio. Se seguirá generando mientras escuchas.', 7000); }
+      UI.actualizarPreparar();
+    });
+    return r;
+  },
+  // Genera por adelantado (unos minutos, o todo si se pidió "preparar")
+  async generarAdelante() {
+    if (this.generando || this.motor !== 'wakanda' || !this.doc) return;
+    this.generando = true;
+    const docId = this.doc.id;
+    try {
+      for (;;) {
+        if (!this.doc || this.doc.id !== docId) break;
+        const limite = this.preparando ? this.frases.length : Math.min(this.frases.length, this.i + 30);
+        let k = -1;
+        const falta = (j) => !this.memoria.has(j) && !this.guardadas.has(j) && !this.fallidas.has(j);
+        for (let j = this.i; j < limite; j++) if (falta(j)) { k = j; break; }
+        if (k < 0 && this.preparando) {
+          for (let j = 0; j < this.i; j++) if (falta(j)) { k = j; break; }
+        }
+        if (k < 0) break;
+        await this.asegurar(k);
+        if (k > this.i + 40) this.memoria.delete(k);
+        UI.actualizarPreparar();
+        await esperarFrame();
+      }
+    } catch (e) {
+      console.warn(e);
+      if (this.preparando) {
+        this.preparando = false;
+        avisar('No se pudo terminar de preparar el audio: ' + e.message + '. Toca «Preparar» para intentarlo otra vez.', 8000);
+      }
+    } finally {
+      this.generando = false;
+    }
+    this.revisarPreparado();
+  },
+  listas() { return Math.min(this.frases.length, this.guardadas.size + this.fallidas.size); },
+  revisarPreparado() {
+    if (this.preparando && this.doc && this.listas() >= this.frases.length) {
+      this.preparando = false;
+      avisar(this.fallidas.size
+        ? `Audio listo. ${this.fallidas.size === 1 ? 'Una frase no se pudo generar y se saltará' : this.fallidas.size + ' frases no se pudieron generar y se saltarán'}.`
+        : 'Audio completo listo. Ya puedes salir y escuchar sin pausas.', 6000);
+    }
+    if (!this.preparando) Pantalla.soltarPreparacion();
+    UI.actualizarPreparar();
+  },
+  // Tiempo estimado para generar lo que falta
+  faltaPreparar() {
+    let letras = 0;
+    for (let j = 0; j < this.frases.length; j++) if (!this.guardadas.has(j) && !this.fallidas.has(j)) letras += this.frases[j].x.length;
+    return (letras * this.msPorLetra) / 1000;
+  },
+  liberarMemoria() {
+    for (const k of this.memoria.keys()) if (k < this.i - 2 || k > this.i + 45) this.memoria.delete(k);
+  },
+
+  async reproducir() {
+    if (!this.doc || !this.frases.length) return;
+    if (this.i >= this.frases.length) this.i = 0;
+    this.elegirMotor();
+    this.sonando = true;
+    UI.estadoPlay();
+    Pantalla.activar();
+    if (this.motor === 'celular') return Celular.hablar(this.i);
+    // Desbloquea el audio dentro del toque (iOS) con un silencio mientras llega la voz.
+    if (this.clip && this.i >= this.clip.desde && this.i < this.clip.hasta && audio.src && !audio.ended && audio.currentTime > 0) {
+      audio.play().catch(() => {});
+      Sesion.estado('playing');
+      return;
+    }
+    this.ponerSilencio();
+    this.iniciarClip(this.i);
+  },
+  ponerSilencio() {
+    this.esperando = true;
+    this.cambiando = true;
+    audio.loop = true;
+    audio.src = URL_SILENCIO;
+    audio.play().catch(() => {}).finally(() => { this.cambiando = false; });
+  },
+  async iniciarClip(k) {
+    const token = ++this.token;
+    UI.aviso(Motor.listo ? '' : 'Preparando la voz…');
+    try {
+      if (!this.memoria.has(k)) UI.aviso(Motor.worker ? 'Generando voz…' : 'Preparando la voz…');
+      const primera = await this.asegurar(k);
+      if (token !== this.token || !this.sonando) return;
+      const trozos = [primera.pcm];
+      const inicios = [0];
+      let dur = primera.seg, hasta = k + 1;
+      const pausa = (j) => new Int16Array(Math.round(Motor.frecuencia * this.frasePausa(j)));
+      let p = pausa(k); trozos.push(p); dur += p.length / Motor.frecuencia;
+      while (hasta < this.frases.length && dur < 45 && this.memoria.has(hasta)) {
+        const r = this.memoria.get(hasta);
+        inicios.push(dur);
+        trozos.push(r.pcm);
+        dur += r.seg;
+        p = pausa(hasta); trozos.push(p); dur += p.length / Motor.frecuencia;
+        hasta++;
+      }
+      const viejo = this.clip && this.clip.url;
+      this.clip = { desde: k, hasta, inicios, url: URL.createObjectURL(crearWav(trozos, Motor.frecuencia)) };
+      this.cambiando = true;
+      this.esperando = false;
+      audio.loop = false;
+      audio.src = this.clip.url;
+      audio.playbackRate = this.velocidad;
+      audio.defaultPlaybackRate = this.velocidad;
+      await audio.play().catch((e) => { if (e && e.name === 'NotAllowedError') { this.sonando = false; UI.estadoPlay(); } });
+      this.cambiando = false;
+      if (viejo) URL.revokeObjectURL(viejo);
+      this.i = k;
+      UI.marcar(k, true);
+      UI.aviso('');
+      Sesion.metadatos();
+      Sesion.estado(this.sonando ? 'playing' : 'paused');
+      this.liberarMemoria();
+      this.generarAdelante();
+    } catch (e) {
+      if (token !== this.token) return;
+      console.warn(e);
+      this.sonando = false;
+      audio.pause();
+      UI.estadoPlay();
+      UI.aviso('');
+      if (Motor.fallo || /arrancar|descargada/.test(e.message)) {
+        avisar('La voz Wakanda no pudo arrancar aquí. Sigo con la voz del celular.');
+        Motor.fallo = Motor.fallo || e.message;
+        UI.tarjetaVoz();
+        this.reproducir();
+      } else avisar('No se pudo generar esta parte: ' + e.message);
+    }
+  },
+  alAvanzar() {
+    if (!this.clip || this.esperando) return;
+    const t = audio.currentTime;
+    let j = 0;
+    while (j + 1 < this.clip.inicios.length && t >= this.clip.inicios[j + 1]) j++;
+    const k = this.clip.desde + j;
+    if (k !== this.i) { this.i = k; UI.marcar(k, true); this.guardarPos(); this.generarAdelante(); }
+    UI.tiempo();
+    Sesion.posicion();
+  },
+  alTerminar() {
+    if (this.esperando || !this.clip || !this.sonando) return;
+    const k = this.clip.hasta;
+    if (k >= this.frases.length) return this.terminado();
+    this.i = k;
+    UI.marcar(k, true);
+    this.guardarPos();
+    if (!this.memoria.has(k)) this.ponerSilencio();
+    this.iniciarClip(k);
+  },
+  terminado() {
+    this.sonando = false;
+    this.i = 0;
+    this.doc.pos = this.frases.length;
+    this.guardarPos(true);
+    this.clip = null;
+    UI.estadoPlay();
+    UI.marcar(-1);
+    Sesion.estado('paused');
+    Pantalla.soltar();
+    avisar('Terminaste el documento.');
+  },
+  pausar() {
+    this.sonando = false;
+    this.token++;
+    if (this.motor === 'celular') Celular.callar();
+    audio.pause();
+    UI.estadoPlay();
+    UI.aviso('');
+    Sesion.estado('paused');
+    Pantalla.soltar();
+    this.guardarPos(true);
+  },
+  alternar() { this.sonando ? this.pausar() : this.reproducir(); },
+  irA(k, tocar = this.sonando) {
+    k = Math.max(0, Math.min(this.frases.length - 1, k));
+    this.token++;
+    if (this.motor === 'celular') Celular.callar();
+    this.i = k;
+    UI.marcar(k, true);
+    this.guardarPos();
+    if (!tocar) {
+      audio.pause();
+      this.clip = null;
+      UI.tiempo();
+      if (this.motor === 'wakanda') this.generarAdelante();
+      return;
+    }
+    this.sonando = true;
+    UI.estadoPlay();
+    if (this.elegirMotor() === 'celular') return Celular.hablar(k);
+    if (this.clip && k >= this.clip.desde && k < this.clip.hasta) {
+      audio.currentTime = this.clip.inicios[k - this.clip.desde] + 0.001;
+      audio.play().catch(() => {});
+      return;
+    }
+    if (!this.memoria.has(k)) this.ponerSilencio();
+    this.iniciarClip(k);
+  },
+  cambiarVelocidad() {
+    const pasos = [0.8, 1, 1.15, 1.3, 1.5, 1.75, 2];
+    const n = pasos[(pasos.findIndex((p) => Math.abs(p - this.velocidad) < 0.01) + 1) % pasos.length];
+    this.velocidad = n;
+    local.guardar('velocidad', n);
+    audio.playbackRate = n;
+    audio.defaultPlaybackRate = n;
+    if (this.motor === 'celular' && this.sonando) { Celular.callar(); Celular.hablar(this.i); }
+    UI.velocidad();
+    UI.tiempo();
+  },
+  detener() {
+    this.token++;
+    this.sonando = false;
+    Celular.callar();
+    audio.pause();
+    audio.removeAttribute('src');
+    if (this.clip) URL.revokeObjectURL(this.clip.url);
+    this.clip = null;
+    this.esperando = false;
+    Pantalla.soltar();
+  },
+  _ultimoGuardado: 0,
+  guardarPos(ya) {
+    if (!this.doc) return;
+    if (this.doc.pos !== this.frases.length) this.doc.pos = this.i;
+    const ahora = Date.now();
+    if (!ya && ahora - this._ultimoGuardado < 3000) return;
+    this._ultimoGuardado = ahora;
+    this.doc.abierto = ahora;
+    BD.guardar('docs', this.doc).catch(() => {});
+  },
+  restante() {
+    if (!this.doc) return 0;
+    let car = 0;
+    for (let k = this.i; k < this.frases.length; k++) car += this.frases[k].x.length;
+    return car / this.cps / this.velocidad;
+  },
+};
+audio.addEventListener('timeupdate', () => Rep.alAvanzar());
+audio.addEventListener('ended', () => Rep.alTerminar());
+audio.addEventListener('pause', () => {
+  // Pausa desde audífonos, pantalla de bloqueo o una llamada
+  if (Rep.cambiando || Rep.esperando || audio.ended) return;
+  if (Rep.sonando && Rep.motor === 'wakanda' && Rep.clip) { Rep.sonando = false; UI.estadoPlay(); Rep.guardarPos(true); Sesion.estado('paused'); }
+});
+audio.addEventListener('play', () => {
+  if (!Rep.sonando && Rep.motor === 'wakanda' && Rep.clip) { Rep.sonando = true; UI.estadoPlay(); Sesion.estado('playing'); }
+});
+
+// Voz del celular (Web Speech): sin descarga, pero suele pararse con la pantalla bloqueada.
+const Celular = {
+  disponible: 'speechSynthesis' in window,
+  voces: [],
+  elegida: local.leer('vozCelular', ''),
+  turno: 0,
+  cargarVoces() {
+    if (!this.disponible) return;
+    const rango = (v) => {
+      const l = v.lang.replace('_', '-').toLowerCase();
+      let p = ['es-co', 'es-us', 'es-mx', 'es-419'].includes(l) ? 0 : l === 'es-es' ? 2 : l.startsWith('es') ? 1 : 9;
+      if (/natural|neural|premium|enhanced|mejorad|google/i.test(v.name)) p -= 0.5;
+      return p;
+    };
+    this.voces = speechSynthesis.getVoices().filter((v) => /^es/i.test(v.lang)).sort((a, b) => rango(a) - rango(b));
+    UI.vocesCelular();
+  },
+  voz() { return this.voces.find((v) => v.voiceURI === this.elegida) || this.voces[0] || null; },
+  hablar(k) {
+    if (!this.disponible) { Rep.sonando = false; UI.estadoPlay(); avisar('Este navegador no tiene voz propia. Descarga la voz Wakanda.'); return; }
+    const turno = ++this.turno;
+    speechSynthesis.cancel();
+    const decir = (j) => {
+      if (turno !== this.turno || !Rep.sonando) return;
+      if (j >= Rep.frases.length) return Rep.terminado();
+      Rep.i = j;
+      UI.marcar(j, true);
+      UI.tiempo();
+      Rep.guardarPos();
+      const u = new SpeechSynthesisUtterance(paraDecir(Rep.frases[j].x) || '.');
+      const v = this.voz();
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = 'es-419';
+      u.rate = Rep.velocidad;
+      u.onend = () => setTimeout(() => decir(j + 1), Rep.frasePausa(j) * 600);
+      u.onerror = (e) => { if (e.error !== 'interrupted' && e.error !== 'canceled') setTimeout(() => decir(j + 1), 200); };
+      speechSynthesis.speak(u);
+    };
+    UI.aviso(Motor.descargadas.size ? '' : 'Voz del celular. Para escuchar con la pantalla apagada, descarga la voz Wakanda.');
+    decir(k);
+  },
+  callar() { this.turno++; if (this.disponible) speechSynthesis.cancel(); },
+};
+
+// Pantalla de bloqueo y audífonos (Media Session)
+const Sesion = {
+  arte: null,
+  dibujarArte() {
+    try {
+      const c = document.createElement('canvas');
+      c.width = c.height = 512;
+      const g = c.getContext('2d');
+      g.fillStyle = '#1f3f63'; g.fillRect(0, 0, 512, 512);
+      g.fillStyle = '#00a8a8'; g.fillRect(0, 0, 512, 22);
+      g.strokeStyle = '#e7e38a'; g.lineWidth = 20; g.lineCap = 'round';
+      for (const [x, h] of [[156, 90], [216, 190], [276, 250], [336, 150], [396, 70]]) { g.beginPath(); g.moveTo(x - 40, 280 - h / 2); g.lineTo(x - 40, 280 + h / 2); g.stroke(); }
+      g.fillStyle = '#ffffff'; g.font = '900 56px Lato, Arial, sans-serif'; g.textAlign = 'center';
+      g.fillText('Wakanda', 256, 450);
+      this.arte = c.toDataURL('image/png');
+    } catch (e) {}
+  },
+  metadatos() {
+    if (!('mediaSession' in navigator) || !Rep.doc) return;
+    if (!this.arte) this.dibujarArte();
+    try {
+      navigator.mediaSession.metadata = new MediaMetadata({
+        title: Rep.doc.titulo,
+        artist: 'Wakanda Escucha',
+        album: `Frase ${Rep.i + 1} de ${Rep.frases.length}`,
+        artwork: this.arte ? [{ src: this.arte, sizes: '512x512', type: 'image/png' }] : [],
+      });
+    } catch (e) {}
+  },
+  estado(s) { try { if ('mediaSession' in navigator) navigator.mediaSession.playbackState = s; } catch (e) {} },
+  _ult: 0,
+  posicion() {
+    if (!('mediaSession' in navigator) || !navigator.mediaSession.setPositionState || !Rep.doc) return;
+    const ahora = Date.now();
+    if (ahora - this._ult < 5000) return;
+    this._ult = ahora;
+    try {
+      let antes = 0;
+      for (let k = 0; k < Rep.i; k++) antes += Rep.frases[k].x.length;
+      const dur = Math.max(1, Rep.doc.caracteres / Rep.cps);
+      navigator.mediaSession.setPositionState({ duration: dur, playbackRate: Rep.velocidad, position: Math.min(dur, antes / Rep.cps) });
+      if (navigator.mediaSession.metadata) navigator.mediaSession.metadata.album = `Frase ${Rep.i + 1} de ${Rep.frases.length}`;
+    } catch (e) {}
+  },
+  instalar() {
+    if (!('mediaSession' in navigator)) return;
+    const h = (n, f) => { try { navigator.mediaSession.setActionHandler(n, f); } catch (e) {} };
+    h('play', () => Rep.reproducir());
+    h('pause', () => Rep.pausar());
+    h('stop', () => Rep.pausar());
+    h('previoustrack', () => Rep.irA(Rep.i - 1, true));
+    h('nexttrack', () => Rep.irA(Rep.i + 1, true));
+    h('seekbackward', () => Rep.irA(Rep.i - 2, true));
+    h('seekforward', () => Rep.irA(Rep.i + 2, true));
+  },
+};
+Sesion.instalar();
+
+// Mantener la pantalla encendida (opcional)
+const Pantalla = {
+  quiere: local.leer('pantalla', false),
+  candado: null,
+  async activar() {
+    if (!this.quiere || !('wakeLock' in navigator) || this.candado) return;
+    try { this.candado = await navigator.wakeLock.request('screen'); this.candado.addEventListener('release', () => { this.candado = null; }); } catch (e) {}
+  },
+  soltar() { if (this.candado && !this.porPreparacion) { this.candado.release().catch(() => {}); this.candado = null; } },
+  // Mientras se prepara el audio la pantalla no se apaga: el celular frena la app con la pantalla apagada.
+  porPreparacion: false,
+  async mantenerPorPreparacion() {
+    this.porPreparacion = true;
+    if (!('wakeLock' in navigator) || this.candado) return;
+    try { this.candado = await navigator.wakeLock.request('screen'); this.candado.addEventListener('release', () => { this.candado = null; }); } catch (e) {}
+  },
+  soltarPreparacion() {
+    if (!this.porPreparacion) return;
+    this.porPreparacion = false;
+    if (!(this.quiere && Rep.sonando)) this.soltar();
+  },
+};
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && Rep.sonando) Pantalla.activar();
+  if (document.visibilityState === 'visible' && Rep.preparando) { Pantalla.porPreparacion = false; Pantalla.mantenerPorPreparacion(); }
+  if (document.visibilityState === 'hidden') Rep.guardarPos(true);
+});
+
+// ───────────────────────── Interfaz ─────────────────────────
+const UI = {
+  docs: [],
+  confirmando: null,
+  marcada: -1,
+  seguirHasta: 0,
+  async biblioteca() {
+    try { this.docs = await BD.todos('docs'); } catch (e) { this.docs = []; }
+    if (!this.docs.length && !local.leer('ejemploBorrado', false)) {
+      const ej = prepararDocumento(GUIA);
+      this.docs = [ej];
+      BD.guardar('docs', ej).catch(() => {});
+    }
+    this.docs.sort((a, b) => (b.abierto || 0) - (a.abierto || 0));
+    this.pintarLista();
+  },
+  pintarLista() {
+    const ul = $('lista');
+    ul.textContent = '';
+    if (!this.docs.length) {
+      const li = document.createElement('li');
+      li.className = 'vacio';
+      li.textContent = 'Aquí aparecerán tus documentos. Abre un archivo o pega un texto para empezar.';
+      ul.appendChild(li);
+      return;
+    }
+    for (const d of this.docs) {
+      const li = document.createElement('li');
+      li.className = 'doc';
+      const abrir = document.createElement('button');
+      abrir.className = 'abrir';
+      const t = document.createElement('span');
+      t.className = 't';
+      if (d.ejemplo) { const c = document.createElement('span'); c.className = 'chip'; c.textContent = 'Ejemplo'; t.appendChild(c); }
+      t.appendChild(document.createTextNode(d.titulo));
+      const m = document.createElement('span');
+      m.className = 'm';
+      const pct = d.total ? Math.round((Math.min(d.pos, d.total) / d.total) * 100) : 0;
+      const dur = minutos(d.caracteres / Rep.cps) || 'menos de 1 min';
+      m.textContent = [d.origen, d.detalle, dur.startsWith('menos') ? dur : '≈ ' + dur, pct >= 100 ? 'Escuchado' : pct ? pct + ' % escuchado' : 'Sin empezar'].filter(Boolean).join(' · ');
+      const barra = document.createElement('span');
+      barra.className = 'progreso';
+      const i = document.createElement('i');
+      i.style.width = Math.min(100, pct) + '%';
+      barra.appendChild(i);
+      abrir.append(t, m, barra);
+      abrir.addEventListener('click', () => this.abrirDoc(d.id));
+      const zona = document.createElement('div');
+      zona.className = 'borrar-doc';
+      if (this.confirmando === d.id) {
+        const si = document.createElement('button');
+        si.className = 'btn btn-peligro si';
+        si.textContent = 'Borrar';
+        si.addEventListener('click', () => this.borrarDoc(d.id));
+        const no = document.createElement('button');
+        no.className = 'btn btn-borde si';
+        no.textContent = 'No';
+        no.addEventListener('click', () => { this.confirmando = null; this.pintarLista(); });
+        zona.append(no, si);
+      } else {
+        const b = document.createElement('button');
+        b.className = 'icono-btn';
+        b.setAttribute('aria-label', 'Borrar ' + d.titulo);
+        b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>';
+        b.addEventListener('click', () => { this.confirmando = d.id; this.pintarLista(); });
+        zona.appendChild(b);
+      }
+      li.append(abrir, zona);
+      ul.appendChild(li);
+    }
+  },
+  async borrarDoc(id) {
+    this.confirmando = null;
+    const d = this.docs.find((x) => x.id === id);
+    if (d && d.ejemplo) local.guardar('ejemploBorrado', true);
+    this.docs = this.docs.filter((x) => x.id !== id);
+    this.pintarLista();
+    try { await BD.borrar('docs', id); await BD.borrarRango('audio', id + '|', id + '|￿'); } catch (e) {}
+    avisar('Documento borrado.');
+  },
+  async agregarDocs(lista) {
+    const nuevos = lista.map(prepararDocumento).filter((d) => d.total > 0);
+    for (const d of nuevos) { try { await BD.guardar('docs', d); } catch (e) {} }
+    this.docs = [...nuevos, ...this.docs];
+    this.pintarLista();
+    return nuevos;
+  },
+  async abrirDoc(id) {
+    const d = this.docs.find((x) => x.id === id);
+    if (!d) return;
+    d.abierto = Date.now();
+    await Rep.abrir(d);
+    $('titulo-doc').textContent = d.titulo;
+    this.pintarTexto();
+    $('vista-biblioteca').hidden = true;
+    $('vista-lector').hidden = false;
+    $('reproductor').hidden = false;
+    document.body.classList.add('con-reproductor');
+    Rep.elegirMotor();
+    this.estadoPlay();
+    this.velocidad();
+    this.marcar(Rep.i, true, true);
+    this.tiempo();
+    this.actualizarPreparar();
+    this.aviso(Rep.motor === 'celular' ? (Motor.descargadas.size ? '' : 'Usando la voz del celular. Descarga la voz Wakanda para la pantalla apagada.') : '');
+    window.scrollTo(0, 0);
+    if (Rep.i > 0) setTimeout(() => this.marcar(Rep.i, true, true), 50);
+    if (Rep.motor === 'wakanda') Motor.iniciar().catch(() => {});
+    BD.guardar('docs', d).catch(() => {});
+  },
+  volver() {
+    Rep.pausar();
+    Rep.detener();
+    $('vista-lector').hidden = true;
+    $('reproductor').hidden = true;
+    document.body.classList.remove('con-reproductor');
+    $('vista-biblioteca').hidden = false;
+    this.docs.sort((a, b) => (b.abierto || 0) - (a.abierto || 0));
+    this.pintarLista();
+    window.scrollTo(0, 0);
+  },
+  pintarTexto() {
+    const art = $('texto');
+    art.textContent = '';
+    let k = 0;
+    const frag = document.createDocumentFragment();
+    for (const b of Rep.doc.bloques) {
+      const el = document.createElement(b.t === 'h' ? 'h2' : 'p');
+      el.className = b.t;
+      b.o.forEach((x, n) => {
+        const s = document.createElement('span');
+        s.className = 'or';
+        s.dataset.i = k++;
+        s.textContent = x;
+        el.appendChild(s);
+        if (n < b.o.length - 1) el.appendChild(document.createTextNode(' '));
+      });
+      frag.appendChild(el);
+    }
+    art.appendChild(frag);
+    this.marcada = -1;
+  },
+  marcar(k, seguir, ya) {
+    const art = $('texto');
+    if (this.marcada >= 0) { const v = art.querySelector(`.or[data-i="${this.marcada}"]`); v && v.classList.remove('actual'); }
+    this.marcada = k;
+    if (k < 0) return;
+    const s = art.querySelector(`.or[data-i="${k}"]`);
+    if (!s) return;
+    s.classList.add('actual');
+    const pct = Rep.frases.length ? (k / Rep.frases.length) * 100 : 0;
+    $('avance').style.width = pct + '%';
+    if (seguir && document.visibilityState === 'visible' && (ya || Date.now() > this.seguirHasta)) {
+      const r = s.getBoundingClientRect();
+      const alto = window.innerHeight;
+      if (ya || r.top < 70 || r.bottom > alto - 190) s.scrollIntoView({ block: 'center', behavior: ya || matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+    }
+  },
+  estadoPlay() {
+    $('ico-play').hidden = Rep.sonando;
+    $('ico-pausa').hidden = !Rep.sonando;
+    $('btn-play').setAttribute('aria-label', Rep.sonando ? 'Pausar' : 'Reproducir');
+  },
+  velocidad() { $('btn-vel').textContent = numero(Rep.velocidad, 2) + '×'; },
+  tiempo() {
+    if (!Rep.doc) return;
+    const falta = minutos(Rep.restante());
+    $('tiempo').textContent = `${Math.min(Rep.i + 1, Rep.frases.length)} / ${Rep.frases.length}` + (falta ? `\nfaltan ${falta}` : '');
+    $('tiempo').style.whiteSpace = 'pre-line';
+  },
+  aviso(t) { $('aviso-rep').textContent = t; },
+  actualizarPreparar() {
+    const z = $('zona-preparar'), b = $('btn-preparar');
+    if (!Rep.doc || Rep.motor !== 'wakanda' || !Motor.descargadas.has(Motor.vozId)) { z.hidden = true; return; }
+    z.hidden = false;
+    const n = Rep.listas(), total = Rep.frases.length;
+    if (n >= total) { b.textContent = 'Audio completo guardado ✓'; b.disabled = true; }
+    else if (Rep.preparando) {
+      const falta = minutos(Rep.faltaPreparar());
+      b.textContent = `Preparando audio… ${Math.floor((n / total) * 100)} %` + (falta ? ` · faltan ${falta}` : '');
+      b.disabled = true;
+    }
+    else { b.textContent = n ? `Preparar audio completo (${Math.floor((n / total) * 100)} % listo)` : 'Preparar audio completo'; b.disabled = false; }
+  },
+  tarjetaVoz() {
+    const v = VOCES.find((x) => x.id === Motor.vozId) || VOCES[0];
+    const lista = Motor.descargadas.has(v.id);
+    $('voz-titulo').textContent = Motor.fallo ? 'La voz Wakanda no pudo arrancar aquí' : lista ? `Voz Wakanda lista: ${v.nombre}` : 'Descarga la voz para escuchar en la calle';
+    $('voz-texto').textContent = Motor.fallo
+      ? 'Abre esta página en Safari o Chrome actualizados. Mientras tanto se usa la voz del celular, que necesita la pantalla encendida.'
+      : lista
+      ? 'La voz se genera dentro de tu celular, sin internet. Dale reproducir y bloquea la pantalla: la lectura sigue sonando.'
+      : 'Se descarga una sola vez (unos 75 MB, mejor con WiFi). Después la voz se genera dentro de tu celular: tus documentos no salen de aquí y la lectura sigue con la pantalla bloqueada.';
+    $('btn-descargar-voz').hidden = lista;
+    const estado = $('voz-estado');
+    estado.querySelector('.punto').classList.toggle('ok', lista && !Motor.fallo);
+    estado.querySelector('span:last-child').textContent = Motor.fallo
+      ? 'Este navegador no pudo usar la voz Wakanda; se usa la del celular'
+      : lista ? 'Funciona con la pantalla apagada' : 'Mientras tanto se usa la voz del celular';
+  },
+  async descargarVoz(id) {
+    const barra = $('voz-barra'), boton = $('btn-descargar-voz');
+    barra.hidden = false;
+    boton.disabled = true;
+    const texto = boton.querySelector('span');
+    try {
+      await Motor.descargar(id, (p) => {
+        barra.firstElementChild.style.width = (p * 100).toFixed(1) + '%';
+        texto.textContent = `Descargando… ${Math.floor(p * 100)} %`;
+        const s = document.querySelector(`[data-descarga="${id}"]`);
+        if (s) s.textContent = `Descargando… ${Math.floor(p * 100)} %`;
+      });
+      Motor.vozId = id;
+      local.guardar('voz', id);
+      Motor.apagar();
+      Motor.fallo = '';
+      texto.textContent = 'Probando la voz…';
+      try {
+        await Motor.iniciar();
+        avisar('Voz descargada. Ya puedes escuchar con la pantalla apagada.');
+      } catch (e) {
+        avisar('La voz se descargó, pero este navegador no la deja funcionar. Mientras tanto se usa la voz del celular.', 7000);
+      }
+    } catch (e) {
+      avisar(e.message || 'No se pudo descargar la voz.');
+    } finally {
+      barra.hidden = true;
+      boton.disabled = false;
+      texto.textContent = 'Descargar voz';
+      this.tarjetaVoz();
+      this.opcionesVoz();
+      if (Rep.doc) { Rep.elegirMotor(); await Rep.cargarGuardadas(); }
+    }
+  },
+  opcionesVoz() {
+    const caja = $('opciones-voz');
+    caja.textContent = '';
+    for (const v of VOCES) {
+      const lab = document.createElement('label');
+      lab.className = 'opcion';
+      lab.htmlFor = 'voz-' + v.id;
+      const r = document.createElement('input');
+      r.type = 'radio'; r.name = 'voz'; r.id = 'voz-' + v.id; r.value = v.id;
+      r.checked = Motor.vozId === v.id;
+      r.disabled = !Motor.descargadas.has(v.id);
+      r.addEventListener('change', async () => {
+        Rep.pausar();
+        Motor.vozId = v.id;
+        local.guardar('voz', v.id);
+        Motor.apagar();
+        Motor.fallo = '';
+        Rep.memoria.clear();
+        Rep.clip = null;
+        await Rep.cargarGuardadas();
+        Motor.iniciar().catch(() => {});
+        this.tarjetaVoz();
+      });
+      const b = document.createElement('b');
+      b.textContent = 'Voz Wakanda · ' + v.nombre;
+      const sm = document.createElement('small');
+      sm.textContent = v.detalle + (Motor.descargadas.has(v.id) ? ' · descargada' : ' · 63 MB');
+      const acc = document.createElement('div');
+      acc.className = 'acciones-voz';
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      if (Motor.descargadas.has(v.id)) {
+        btn.className = 'btn btn-borde';
+        btn.textContent = 'Borrar del celular';
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          if (btn.dataset.confirma !== '1') { btn.dataset.confirma = '1'; btn.textContent = '¿Seguro? Toca otra vez'; return; }
+          Rep.pausar();
+          await Motor.borrarVoz(v.id);
+          this.opcionesVoz();
+          this.tarjetaVoz();
+          Rep.elegirMotor();
+          this.actualizarPreparar();
+        });
+      } else {
+        btn.className = 'btn btn-azul';
+        btn.textContent = 'Descargar';
+        btn.dataset.descarga = v.id;
+        btn.addEventListener('click', (e) => { e.preventDefault(); btn.disabled = true; this.descargarVoz(v.id); });
+      }
+      acc.appendChild(btn);
+      lab.append(r, b, sm, acc);
+      caja.appendChild(lab);
+    }
+  },
+  vocesCelular() {
+    const sel = $('sel-voz-celular');
+    if (!sel) return;
+    sel.textContent = '';
+    $('bloque-voz-celular').hidden = !Celular.disponible;
+    if (!Celular.voces.length) {
+      const o = document.createElement('option');
+      o.textContent = 'Voz en español del sistema';
+      sel.appendChild(o);
+      return;
+    }
+    for (const v of Celular.voces) {
+      const o = document.createElement('option');
+      o.value = v.voiceURI;
+      o.textContent = `${v.name} (${v.lang})`;
+      o.selected = Celular.voz() === v;
+      sel.appendChild(o);
+    }
+  },
+  async espacio() {
+    const p = $('info-espacio');
+    try {
+      const e = await navigator.storage.estimate();
+      p.textContent = `La app ocupa ${numero((e.usage || 0) / 1048576)} MB en este dispositivo (voces, documentos y audios generados).`;
+    } catch (e) { p.textContent = 'Los audios generados se guardan para no repetir el trabajo.'; }
+  },
+};
+
+// Guía de ejemplo (sirve para probar la voz)
+const GUIA = {
+  titulo: 'Guía rápida de Wakanda Escucha',
+  origen: 'Guía',
+  ejemplo: true,
+  bloques: [
+    { t: 'h', x: 'Guía rápida de Wakanda Escucha' },
+    { t: 'p', x: 'Esta guía es un ejemplo. Dale al botón de reproducir y escúchala para probar cómo suena la app.' },
+    { t: 'h', x: 'Agrega un documento' },
+    { t: 'li', x: 'Toca «Abrir archivo» para elegir un PDF, un Word, un archivo de texto o una exportación de Notion, ya sea en Markdown, en HTML o el .zip completo.' },
+    { t: 'li', x: 'Toca «Pegar texto» para leer lo que hayas copiado: una página web, un correo o el contenido de una página de Notion.' },
+    { t: 'h', x: 'Escucha con la pantalla apagada' },
+    { t: 'p', x: 'Descarga una vez la voz Wakanda. Pesa unos 75 megas, así que es mejor hacerlo con WiFi. Después el audio se genera dentro de tu celular y tus documentos no se envían a ningún servidor.' },
+    { t: 'p', x: 'Dale reproducir y bloquea el celular. La lectura sigue sonando, y puedes pausar o saltar desde la pantalla de bloqueo o desde los audífonos.' },
+    { t: 'p', x: 'Si el documento es largo y vas a salir, toca «Preparar audio completo» antes. Así todo el audio queda listo y guardado en el celular.' },
+    { t: 'h', x: 'Controla la lectura' },
+    { t: 'li', x: 'Toca cualquier frase del texto para seguir leyendo desde ahí.' },
+    { t: 'li', x: 'Cambia la velocidad con el botón de la izquierda del reproductor.' },
+    { t: 'li', x: 'La app recuerda dónde ibas en cada documento.' },
+    { t: 'h', x: 'Notion y páginas web' },
+    { t: 'p', x: 'En Notion, abre la página, toca el menú de los tres puntos, elige Exportar y escoge Markdown o PDF. Luego ábrela aquí con «Abrir archivo».' },
+    { t: 'p', x: 'Desde el computador también puedes seleccionar todo el texto de la página, copiarlo y pegarlo aquí.' },
+  ],
+};
+
+// ───────────────────────── Importar ─────────────────────────
+async function importarArchivos(archivos) {
+  const leidos = [];
+  const problemas = [];
+  for (const f of archivos) {
+    const ext = (f.name.match(/\.([a-z0-9]+)$/i) || [])[1]?.toLowerCase() || '';
+    cargando(`Leyendo «${f.name}»…`);
+    try {
+      if (ext === 'pdf' || f.type === 'application/pdf') {
+        const r = await bloquesDesdePDF(await f.arrayBuffer(), cargando);
+        if (!r.bloques.length) { problemas.push(`«${f.name}» no tiene texto que leer (parece una imagen escaneada).`); continue; }
+        leidos.push({ titulo: nombreBonito(f.name), origen: 'PDF', detalle: r.paginas + (r.paginas === 1 ? ' pág.' : ' págs.'), bloques: r.bloques });
+      } else if (ext === 'docx') {
+        leidos.push({ titulo: nombreBonito(f.name), origen: 'Word', bloques: await bloquesDesdeDOCX(await f.arrayBuffer()) });
+      } else if (ext === 'doc') {
+        problemas.push(`«${f.name}» es un Word antiguo (.doc). Guárdalo como .docx o PDF y ábrelo otra vez.`);
+      } else if (ext === 'zip') {
+        const docs = await documentosDesdeZip(await f.arrayBuffer());
+        if (!docs.length) problemas.push(`En «${f.name}» no encontré páginas para leer.`);
+        leidos.push(...docs);
+      } else if (ext === 'md' || ext === 'markdown') {
+        leidos.push({ titulo: nombreBonito(f.name), origen: 'Notion', bloques: bloquesDesdeMarkdown(await f.text()) });
+      } else if (ext === 'html' || ext === 'htm') {
+        leidos.push({ titulo: nombreBonito(f.name), origen: 'Web', bloques: bloquesDesdeHTML(await f.text()) });
+      } else if (ext === 'txt' || f.type.startsWith('text/')) {
+        leidos.push({ titulo: nombreBonito(f.name), origen: 'Texto', bloques: bloquesDesdeMarkdown(await f.text(), { saltoEsBloque: true }) });
+      } else {
+        problemas.push(`No sé leer «${f.name}». Usa PDF, Word (.docx), texto o una exportación de Notion.`);
+      }
+    } catch (e) {
+      console.warn(e);
+      problemas.push(`No pude leer «${f.name}». ${e.message && e.message.includes('conexión') ? e.message : 'Puede estar dañado o protegido con contraseña.'}`);
+    }
+  }
+  cargando('');
+  for (const d of leidos) { const h = d.bloques.find((b) => b.t === 'h'); if (h && /^(documento|untitled|sin título)$/i.test(d.titulo)) d.titulo = h.x; }
+  const nuevos = await UI.agregarDocs(leidos);
+  if (problemas.length) avisar(problemas.join(' '), 7000);
+  else if (nuevos.length > 1) avisar(`Agregué ${nuevos.length} documentos a tu biblioteca.`);
+  if (nuevos.length === 1) UI.abrirDoc(nuevos[0].id);
+  else if (!nuevos.length && !problemas.length) avisar('El archivo no tiene texto para leer.');
+}
+
+let htmlPegado = null;
+function abrirPegar() {
+  htmlPegado = null;
+  $('pegar-nombre').value = '';
+  $('pegar-area').value = '';
+  $('hoja-pegar').hidden = false;
+  setTimeout(() => $('pegar-area').focus(), 50);
+}
+$('pegar-area').addEventListener('paste', (e) => {
+  const html = e.clipboardData && e.clipboardData.getData('text/html');
+  htmlPegado = html && /<(h[1-6]|li|p|div|br|table)[\s>]/i.test(html) ? { html, texto: null } : null;
+  setTimeout(() => { if (htmlPegado) htmlPegado.texto = $('pegar-area').value; }, 0);
+});
+$('pegar-guardar').addEventListener('click', async () => {
+  const texto = $('pegar-area').value;
+  if (!tieneLetras(texto)) { avisar('Pega primero el texto que quieres escuchar.'); return; }
+  const usarHtml = htmlPegado && htmlPegado.texto === texto;
+  let bloques = usarHtml ? bloquesDesdeHTML(htmlPegado.html) : [];
+  if (!bloques.length) bloques = bloquesDesdeMarkdown(texto, { saltoEsBloque: true });
+  const nombre = $('pegar-nombre').value.trim() || (bloques[0] ? bloques[0].x.slice(0, 70) : 'Texto pegado');
+  $('hoja-pegar').hidden = true;
+  const [d] = await UI.agregarDocs([{ titulo: nombre, origen: 'Texto pegado', bloques }]);
+  if (d) UI.abrirDoc(d.id);
+});
+$('pegar-cancelar').addEventListener('click', () => { $('hoja-pegar').hidden = true; });
+
+// ───────────────────────── Eventos ─────────────────────────
+$('btn-archivo').addEventListener('click', () => $('entrada-archivo').click());
+$('entrada-archivo').addEventListener('change', (e) => {
+  const archivos = [...e.target.files];
+  e.target.value = '';
+  if (archivos.length) importarArchivos(archivos);
+});
+$('btn-pegar').addEventListener('click', abrirPegar);
+$('btn-descargar-voz').addEventListener('click', () => UI.descargarVoz(Motor.vozId));
+$('btn-volver').addEventListener('click', () => UI.volver());
+$('btn-play').addEventListener('click', () => Rep.alternar());
+$('btn-atras').addEventListener('click', () => Rep.irA(Rep.i - 1));
+$('btn-adelante').addEventListener('click', () => Rep.irA(Rep.i + 1));
+$('btn-vel').addEventListener('click', () => Rep.cambiarVelocidad());
+$('btn-preparar').addEventListener('click', () => {
+  Rep.preparando = true;
+  Rep.fallasSeguidas = 0;
+  Pantalla.mantenerPorPreparacion();
+  avisar('Preparando el audio. Deja la app abierta con la pantalla encendida hasta que termine.', 6000);
+  UI.actualizarPreparar();
+  Motor.iniciar().then(() => Rep.generarAdelante()).catch((e) => { Rep.preparando = false; UI.actualizarPreparar(); avisar(e.message); });
+});
+$('texto').addEventListener('click', (e) => {
+  const s = e.target.closest('.or');
+  if (!s) return;
+  Rep.irA(+s.dataset.i, true);
+});
+for (const ev of ['wheel', 'touchmove']) window.addEventListener(ev, () => { UI.seguirHasta = Date.now() + 6000; }, { passive: true });
+function abrirAjustes() {
+  UI.opcionesVoz();
+  UI.vocesCelular();
+  UI.espacio();
+  $('chk-pantalla').checked = Pantalla.quiere;
+  $('hoja-ajustes').hidden = false;
+}
+$('btn-ajustes').addEventListener('click', abrirAjustes);
+$('btn-ajustes-2').addEventListener('click', abrirAjustes);
+$('ajustes-cerrar').addEventListener('click', () => { $('hoja-ajustes').hidden = true; });
+$('chk-pantalla').addEventListener('change', (e) => { Pantalla.quiere = e.target.checked; local.guardar('pantalla', Pantalla.quiere); if (Pantalla.quiere && Rep.sonando) Pantalla.activar(); else Pantalla.soltar(); });
+$('sel-voz-celular').addEventListener('change', (e) => { Celular.elegida = e.target.value; local.guardar('vozCelular', Celular.elegida); });
+$('btn-borrar-audios').addEventListener('click', async () => {
+  const b = $('btn-borrar-audios');
+  if (b.dataset.confirma !== '1') { b.dataset.confirma = '1'; b.textContent = '¿Seguro? Toca otra vez'; return; }
+  b.dataset.confirma = ''; b.textContent = 'Borrar audios generados';
+  Rep.pausar();
+  try { await BD.vaciar('audio'); } catch (e) {}
+  Rep.memoria.clear(); Rep.clip = null;
+  await Rep.cargarGuardadas();
+  UI.espacio();
+  avisar('Audios borrados. Se vuelven a generar cuando los escuches.');
+});
+for (const id of ['hoja-pegar', 'hoja-ajustes']) $(id).addEventListener('click', (e) => { if (e.target.id === id) $(id).hidden = true; });
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') { $('hoja-pegar').hidden = true; $('hoja-ajustes').hidden = true; }
+  if (e.key === ' ' && !$('vista-lector').hidden && !/input|textarea|select|button/i.test(e.target.tagName)) { e.preventDefault(); Rep.alternar(); }
+});
+
+// ───────────────────────── Arranque ─────────────────────────
+(async () => {
+  if (Celular.disponible) {
+    Celular.cargarVoces();
+    if (speechSynthesis.addEventListener) speechSynthesis.addEventListener('voiceschanged', () => Celular.cargarVoces());
+  }
+  await Motor.revisarDescargadas();
+  UI.tarjetaVoz();
+  await UI.biblioteca();
+  window.__escucha = { Rep, Motor, UI, BD, bloquesDesdeMarkdown, bloquesDesdeHTML, frasesDe, paraDecir, importarArchivos };
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+</body>
+</html>
