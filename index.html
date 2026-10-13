@@ -39,6 +39,8 @@
   --resalte-texto: #1d2733;
   --nota: #fbeef1;
   --peligro: #b83227;
+  --sobre-peligro: #ffffff;
+  --nota-fondo: #fbe2de;
   --sobre-marca: #ffffff;
   --sombra: 0 10px 30px rgba(31, 63, 99, 0.14);
   --f-titulo: "Lato", "Helvetica Neue", Arial, sans-serif;
@@ -70,6 +72,8 @@
     --resalte-texto: #fffbe0;
     --nota: #3a2630;
     --peligro: #ff8b7d;
+    --sobre-peligro: #2a0d09;
+    --nota-fondo: #4a2421;
     --sombra: 0 10px 30px rgba(0, 0, 0, 0.45);
     color-scheme: dark;
   }
@@ -91,6 +95,8 @@
   --resalte-texto: #fffbe0;
   --nota: #3a2630;
   --peligro: #ff8b7d;
+  --sobre-peligro: #2a0d09;
+  --nota-fondo: #4a2421;
   --sombra: 0 10px 30px rgba(0, 0, 0, 0.45);
   color-scheme: dark;
 }
@@ -181,6 +187,21 @@ button { cursor: pointer; }
 .texto .q { margin: 0 0 0.9em; padding-left: 14px; border-left: 3px solid var(--rosa); color: var(--texto-2); max-width: 65ch; }
 .or { cursor: pointer; border-radius: 4px; transition: background-color 0.15s; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
 .or:hover { background: var(--superficie-2); }
+.or.con-nota { background: var(--nota-fondo); box-shadow: inset 0 -2px 0 var(--peligro); }
+.tiene-nota { position: relative; }
+.tiene-nota::after { content: ""; position: absolute; left: -10px; top: 0.35em; bottom: 0.35em; width: 3px; border-radius: 2px; background: var(--peligro); }
+.insignia-nota { display: inline-flex; align-items: center; gap: 3px; margin-left: 6px; padding: 2px 8px; border: 0; border-radius: 999px; background: var(--peligro); color: var(--sobre-peligro); font: 600 0.75rem/1.3 var(--f-texto); vertical-align: 0.15em; }
+.insignia-nota svg { width: 13px; height: 13px; }
+.notas-voz { display: grid; grid-template-columns: 1fr auto; gap: 10px; margin-block: 16px 0; }
+.dictar { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border: 0; border-radius: var(--radio); background: var(--turquesa); color: #04282a; text-align: left; min-width: 0; }
+.dictar svg { width: 30px; height: 30px; flex: none; }
+.dictar b { display: block; font-family: var(--f-titulo); font-size: var(--t-base); }
+.dictar small { display: block; font-size: var(--t-xs); line-height: 1.35; }
+.mis-notas { display: grid; place-items: center; gap: 2px; padding: 10px 14px; border: 1px solid var(--borde); border-radius: var(--radio); background: var(--superficie); color: var(--titulo); min-width: 96px; }
+.mis-notas svg { width: 24px; height: 24px; color: var(--azul); }
+.mis-notas b { font-size: var(--t-sm); font-weight: 600; }
+.mis-notas span { font-size: var(--t-xs); color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.filtro-notas { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-top: 8px; font-size: var(--t-sm); color: var(--texto-2); }
 .or.actual { background: var(--resalte); color: var(--resalte-texto); padding: 1px 2px; margin: -1px -2px; }
 
 /* Reproductor */
@@ -283,6 +304,18 @@ button { cursor: pointer; }
     </div>
   </section>
 
+  <section class="notas-voz" aria-label="Notas de voz">
+    <button class="dictar" id="btn-dictar-libre">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg>
+      <span><b>Dictar una nota</b><small>Habla y queda escrita, sin estar escuchando nada</small></span>
+    </button>
+    <button class="mis-notas" id="btn-ver-notas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v12l-4 4H5z"/><path d="M15 20v-4h4M8 9h8M8 13h5"/></svg>
+      <b>Mis notas</b>
+      <span id="contador-notas-2">Ninguna</span>
+    </button>
+  </section>
+
   <div class="agregar">
     <button id="btn-archivo">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M12 18v-6M9 15l3-3 3 3"/></svg>
@@ -312,6 +345,7 @@ button { cursor: pointer; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
     </button>
     <button class="titulo-doc" id="btn-titulo-doc" aria-label="Cambiar el nombre del documento"><span id="titulo-doc"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+    <button class="icono-btn" id="btn-notas-doc" aria-label="Notas de este documento" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h14v12l-4 4H5z"/><path d="M15 20v-4h4M8 9h8M8 13h5"/></svg><span class="contador" id="contador-notas-doc">0</span></button>
     <button class="icono-btn" id="btn-actualizar" aria-label="Actualizar desde Notion" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8"/><path d="M4 4v4h4"/><path d="M4 13a8 8 0 0 0 14.3 4.9L20 16"/><path d="M20 20v-4h-4"/></svg></button>
     <button class="icono-btn" id="btn-ajustes-2" aria-label="Ajustes">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
@@ -333,6 +367,10 @@ button { cursor: pointer; }
   <div class="fila nueva-nota" style="justify-content: flex-start">
     <button class="btn btn-azul" id="btn-nueva-nota"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg><span>Nueva nota</span></button>
     <button class="btn btn-borde" id="btn-enviar-todas" hidden>Enviar a Notion</button>
+  </div>
+  <div class="filtro-notas" id="filtro-notas" hidden>
+    <span id="filtro-texto"></span>
+    <button type="button" class="boton-texto" id="btn-todas-notas">Ver todas las notas</button>
   </div>
   <div id="notas"></div>
 </main>
@@ -1800,9 +1838,57 @@ const UI = {
     }
     art.appendChild(frag);
     this.marcada = -1;
+    this.marcasNotas();
+  },
+  // Frases con nota: quedan en rojo con una etiqueta que abre la nota. Si el documento cambió (por ejemplo,
+  // al actualizarlo desde Notion), la nota se ubica por el texto de la frase.
+  notasPorFrase() {
+    const mapa = new Map();
+    if (!Rep.doc) return mapa;
+    for (const n of Notas.lista) {
+      if (n.docId !== Rep.doc.id || n.frase < 0) continue;
+      const k = Rep.frases[n.frase] && Rep.frases[n.frase].x === n.contexto ? n.frase : Rep.frases.findIndex((f) => f.x === n.contexto);
+      if (k < 0) continue;
+      if (!mapa.has(k)) mapa.set(k, []);
+      mapa.get(k).push(n);
+    }
+    return mapa;
+  },
+  marcasNotas() {
+    const art = $('texto');
+    art.querySelectorAll('.insignia-nota').forEach((x) => x.remove());
+    art.querySelectorAll('.con-nota').forEach((x) => x.classList.remove('con-nota'));
+    art.querySelectorAll('.tiene-nota').forEach((x) => x.classList.remove('tiene-nota'));
+    const mapa = this.notasPorFrase();
+    this.notasEnFrase = mapa;
+    let total = 0;
+    for (const [k, notas] of mapa) {
+      const s = art.querySelector(`.or[data-i="${k}"]`);
+      if (!s) continue;
+      total += notas.length;
+      s.classList.add('con-nota');
+      s.parentElement.classList.add('tiene-nota');
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'insignia-nota';
+      b.dataset.i = k;
+      b.setAttribute('aria-label', notas.length === 1 ? 'Ver la nota de voz de esta frase' : `Ver las ${notas.length} notas de voz de esta frase`);
+      b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+      b.appendChild(document.createTextNode(notas.length === 1 ? 'Nota' : notas.length + ' notas'));
+      s.after(b);
+    }
+    $('contador-notas-doc').textContent = total;
+    $('btn-notas-doc').hidden = !total;
   },
   marcar(k, seguir, ya) {
     const art = $('texto');
+    const conNota = this.notasEnFrase && this.notasEnFrase.has(k);
+    if (!conNota) this.avisoNota = -1;  // al salir de la frase, la próxima vez que pase por ella vuelve a avisar
+    else if (Rep.sonando && k !== this.avisoNota) {
+      this.avisoNota = k;
+      const n = this.notasEnFrase.get(k)[0];
+      avisar('Aquí dejaste una nota: «' + recortar(n.texto || 'nota de audio', 90) + '»', 6000);
+    }
     if (this.marcada >= 0) { const v = art.querySelector(`.or[data-i="${this.marcada}"]`); v && v.classList.remove('actual'); }
     this.marcada = k;
     if (k < 0) return;
@@ -2289,6 +2375,13 @@ $('btn-preparar').addEventListener('click', () => {
   Motor.iniciar().then(() => Rep.generarAdelante()).catch((e) => { Rep.preparando = false; UI.actualizarPreparar(); avisar(e.message); });
 });
 $('texto').addEventListener('click', (e) => {
+  const insignia = e.target.closest('.insignia-nota');
+  if (insignia) {
+    const notas = (UI.notasEnFrase && UI.notasEnFrase.get(+insignia.dataset.i)) || [];
+    if (notas.length === 1) abrirNota(notas[0]);
+    else if (notas.length) VistaNotas.abrir({ docId: Rep.doc.id });
+    return;
+  }
   const s = e.target.closest('.or');
   if (!s) return;
   Rep.irA(+s.dataset.i, true);
@@ -2341,8 +2434,11 @@ const Notas = {
   },
   contador() {
     const c = $('contador-notas');
-    c.textContent = this.lista.length;
-    c.hidden = !this.lista.length;
+    const n = this.lista.length;
+    c.textContent = n;
+    c.hidden = !n;
+    $('contador-notas-2').textContent = n ? (n === 1 ? '1 nota' : n + ' notas') : 'Ninguna';
+    if (Rep.doc && !$('vista-lector').hidden) UI.marcasNotas();
   },
   async guardar(n) {
     n.editado = Date.now();
@@ -2394,7 +2490,8 @@ const Dictado = {
       id: nuevoId(), docId: f ? Rep.doc.id : '', docTitulo: f ? Rep.doc.titulo : '', frase: f ? Rep.i : -1,
       contexto: f ? f.x : '', texto: '', audio: null, tipoAudio: '', creado: Date.now(), enviada: null,
     };
-    $('dictado-sobre').textContent = f ? `Sobre «${Rep.doc.titulo}»: «${recortar(f.x, 120)}»` : 'Nota sin documento';
+    $('dictado-sobre').textContent = f ? `Sobre «${Rep.doc.titulo}»: «${recortar(f.x, 120)}»` : 'Nota libre: no está unida a ningún documento.';
+    $('dictado-guardar').textContent = this.retomar ? 'Guardar y seguir' : 'Guardar';
     $('dictado-texto').value = '';
     mostrarAudio($('dictado-audio'), null);
     $('hoja-dictado').hidden = false;
@@ -2457,7 +2554,7 @@ const Dictado = {
       return this.grabar('No pude convertir la voz a texto aquí. Te grabo la nota en audio: habla ahora.');
     }
     if (!texto) { this.estado('', 'No te escuché. Toca el micrófono para intentarlo otra vez.'); return; }
-    this.guardarYSeguir('Nota guardada.');
+    this.guardarYSeguir(this.nota.docId ? 'Nota guardada en «Mis notas» y marcada en rojo en el documento.' : 'Nota guardada en «Mis notas».');
   },
   async grabar(mensaje) {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder) {
@@ -2489,7 +2586,7 @@ const Dictado = {
       this.nota.tipoAudio = blob.type;
       this.nota.duracion = Math.round((Date.now() - inicio) / 1000);
       mostrarAudio($('dictado-audio'), this.nota);
-      this.guardarYSeguir('Nota de audio guardada. Si quieres, escribe su texto.');
+      this.guardarYSeguir('Nota de audio guardada en «Mis notas». Si quieres, escribe su texto.');
     };
     mr.start();
     this.grabadora = mr;
@@ -2504,6 +2601,7 @@ const Dictado = {
   // Guarda de una vez y, si se estaba escuchando, sigue leyendo a los pocos segundos.
   async guardarYSeguir(mensaje) {
     this.nota.texto = $('dictado-texto').value.trim();
+    if (this.nota.docId) UI.avisoNota = this.nota.frase;  // no avisar de la nota que se acaba de dejar
     await Notas.guardar(this.nota);
     let quedan = 3;
     const contar = () => {
@@ -2572,7 +2670,7 @@ $('dictado-guardar').addEventListener('click', async () => {
   const n = Dictado.nota;
   Dictado.detener();
   n.texto = $('dictado-texto').value.trim();
-  if (n.texto || n.audio) { await Notas.guardar(n); avisar('Nota guardada.'); }
+  if (n.texto || n.audio) { await Notas.guardar(n); avisar(n.docId ? 'Nota guardada. Quedó marcada en rojo en el documento.' : 'Nota guardada en «Mis notas».'); }
   Dictado.cerrar(true);
 });
 $('dictado-descartar').addEventListener('click', async () => {
@@ -2584,24 +2682,43 @@ $('dictado-descartar').addEventListener('click', async () => {
 
 // Vista de notas
 const VistaNotas = {
-  abrir() {
+  filtro: null,
+  desdeLector: false,
+  abrir(filtro = null) {
     Rep.pausar();
+    this.filtro = filtro;
+    this.desdeLector = !$('vista-lector').hidden;
     $('vista-biblioteca').hidden = true;
+    $('vista-lector').hidden = true;
+    $('reproductor').hidden = true;
     $('vista-notas').hidden = false;
     this.pintar();
     window.scrollTo(0, 0);
   },
   cerrar() {
     $('vista-notas').hidden = true;
-    $('vista-biblioteca').hidden = false;
+    if (this.desdeLector && Rep.doc) {
+      $('vista-lector').hidden = false;
+      $('reproductor').hidden = false;
+      UI.marcasNotas();
+      UI.marcar(Rep.i, true, true);
+    } else {
+      $('vista-biblioteca').hidden = false;
+    }
+    this.desdeLector = false;
     window.scrollTo(0, 0);
   },
   pintar() {
     const caja = $('notas');
     caja.textContent = '';
+    const doc = this.filtro && UI.docs.find((d) => d.id === this.filtro.docId);
+    $('filtro-notas').hidden = !doc;
+    if (doc) $('filtro-texto').textContent = 'Notas de «' + recortar(doc.titulo, 40) + '»';
+    const lista = doc ? Notas.lista.filter((n) => n.docId === doc.id) : Notas.lista;
+    this.visibles = lista;
     $('btn-enviar-todas').hidden = EN_CLAUDE || !Notion.conectado() || !Notas.lista.some((n) => !n.enviada && n.texto);
-    $('btn-compartir-notas').hidden = !Notas.lista.length;
-    if (!Notas.lista.length) {
+    $('btn-compartir-notas').hidden = !lista.length;
+    if (!lista.length) {
       const p = document.createElement('p');
       p.className = 'vacio';
       p.textContent = 'Todavía no tienes notas. Mientras escuchas un documento, toca el micrófono del reproductor y di tu nota: la lectura se pausa, la nota se guarda y la lectura sigue.';
@@ -2611,7 +2728,7 @@ const VistaNotas = {
     const hoy = new Date().toDateString();
     const ayer = new Date(Date.now() - 864e5).toDateString();
     let dia = '', ul = null;
-    for (const n of Notas.lista) {
+    for (const n of lista) {
       const d = new Date(n.creado);
       const etiqueta = d.toDateString() === hoy ? 'Hoy' : d.toDateString() === ayer ? 'Ayer' : d.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' });
       if (etiqueta !== dia) {
@@ -2698,7 +2815,11 @@ async function enviarANotion(notas, destino) {
 $('btn-notas').addEventListener('click', () => VistaNotas.abrir());
 $('btn-volver-notas').addEventListener('click', () => VistaNotas.cerrar());
 $('btn-nueva-nota').addEventListener('click', () => Dictado.abrir(true));
-$('btn-compartir-notas').addEventListener('click', () => compartirTexto('Notas de voz', Notas.lista.map(Notas.comoTexto).join('\n\n')));
+$('btn-compartir-notas').addEventListener('click', () => compartirTexto('Notas de voz', (VistaNotas.visibles || Notas.lista).map(Notas.comoTexto).join('\n\n')));
+$('btn-dictar-libre').addEventListener('click', () => Dictado.abrir(true));
+$('btn-ver-notas').addEventListener('click', () => VistaNotas.abrir());
+$('btn-notas-doc').addEventListener('click', () => { if (Rep.doc) VistaNotas.abrir({ docId: Rep.doc.id }); });
+$('btn-todas-notas').addEventListener('click', () => { VistaNotas.filtro = null; VistaNotas.pintar(); });
 $('btn-enviar-todas').addEventListener('click', async () => {
   const pendientes = Notas.lista.filter((n) => !n.enviada && n.texto);
   const sinDestino = pendientes.find((n) => !destinoNotion(n));
