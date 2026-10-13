@@ -1,0 +1,18 @@
+{
+ "archivos": [
+  "modelo.parte0.wasm",
+  "modelo.parte1.wasm",
+  "modelo.parte2.wasm",
+  "modelo.parte3.wasm",
+  "modelo.parte4.wasm"
+ ],
+ "bytes": 63149200,
+ "sha256": "b8198f4e0495029a686db2f7a7cb70bd4b3d6fe4300e3ee743d8a82602194389",
+ "frecuencia": 22050,
+ "espeak": "es-419",
+ "inferencia": {
+  "noise_scale": 0.667,
+  "length_scale": 1,
+  "noise_w": 0.8
+ }
+}
