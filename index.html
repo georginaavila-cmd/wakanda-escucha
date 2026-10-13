@@ -1191,8 +1191,12 @@ const SesionAudio = {
     if (!this.disponible) return;
     try { if (navigator.audioSession.type !== tipo) navigator.audioSession.type = tipo; } catch (e) {}
   },
-  usarMicrofono() { this.poner('play-and-record'); },
-  soloReproducir() { this.poner('playback'); },
+  microfono: false,
+  usarMicrofono() { this.microfono = true; this.poner('play-and-record'); },
+  soloReproducir() { this.microfono = false; this.poner('playback'); },
+  // Se repite antes de cada fragmento y al despertar la pantalla: si el iPhone trata la página como sonido
+  // «de fondo», la silencia al bloquear o despertar la pantalla aunque el reproductor siga avanzando.
+  reafirmar() { if (!this.microfono) this.poner('playback'); },
 };
 SesionAudio.soloReproducir();
 const Rep = {
@@ -1263,19 +1267,26 @@ const Rep = {
     }
     return this.enCurso.get(clave);
   },
+  // Audio de una frase ya guardado en el celular (o null si no está o cambió el texto)
+  async leerGuardada(k) {
+    const docId = this.doc.id;
+    try {
+      const g = await BD.leer('audio', this.clave(k));
+      if (g && g.h === hash(paraDecir(this.frases[k].x))) {
+        const r = { pcm: new Int16Array(g.pcm), seg: g.pcm.byteLength / 2 / Motor.frecuencia };
+        if (this.doc && this.doc.id === docId) this.memoria.set(k, r);
+        return r;
+      }
+    } catch (e) {}
+    return null;
+  },
   async _asegurar(k) {
     const texto = paraDecir(this.frases[k].x);
     const h = hash(texto);
     const docId = this.doc.id;
     if (this.guardadas.has(k)) {
-      try {
-        const g = await BD.leer('audio', this.clave(k));
-        if (g && g.h === h) {
-          const r = { pcm: new Int16Array(g.pcm), seg: g.pcm.byteLength / 2 / Motor.frecuencia };
-          if (this.doc && this.doc.id === docId) this.memoria.set(k, r);
-          return r;
-        }
-      } catch (e) {}
+      const r = await this.leerGuardada(k);
+      if (r) return r;
     }
     const inicio = performance.now();
     let pcm;
@@ -1327,7 +1338,7 @@ const Rep = {
     try {
       for (;;) {
         if (!this.doc || this.doc.id !== docId) break;
-        const limite = this.preparando ? this.frases.length : Math.min(this.frases.length, this.i + 30);
+        const limite = this.preparando ? this.frases.length : Math.min(this.frases.length, this.i + 70);
         let k = -1;
         const falta = (j) => !this.memoria.has(j) && !this.guardadas.has(j) && !this.fallidas.has(j);
         for (let j = this.i; j < limite; j++) if (falta(j)) { k = j; break; }
@@ -1336,7 +1347,7 @@ const Rep = {
         }
         if (k < 0) break;
         await this.asegurar(k);
-        if (k > this.i + 40) this.memoria.delete(k);
+        if (k > this.i + 80) this.memoria.delete(k);
         UI.actualizarPreparar();
         await esperarFrame();
       }
@@ -1369,7 +1380,7 @@ const Rep = {
     return (letras * this.msPorLetra) / 1000;
   },
   liberarMemoria() {
-    for (const k of this.memoria.keys()) if (k < this.i - 2 || k > this.i + 45) this.memoria.delete(k);
+    for (const k of this.memoria.keys()) if (k < this.i - 2 || k > this.i + 85) this.memoria.delete(k);
   },
 
   async reproducir() {
@@ -1380,6 +1391,7 @@ const Rep = {
     UI.estadoPlay();
     Pantalla.activar();
     if (this.motor === 'celular') return Celular.hablar(this.i);
+    SesionAudio.reafirmar();
     // Desbloquea el audio dentro del toque (iOS) con un silencio mientras llega la voz.
     if (!this.reiniciarAudio && this.clip && this.i >= this.clip.desde && this.i < this.clip.hasta && audio.src && !audio.ended && audio.currentTime > 0) {
       audio.play().catch(() => {});
@@ -1418,8 +1430,11 @@ const Rep = {
       let dur = primera.seg, hasta = k + 1;
       const pausa = (j) => new Int16Array(Math.round(Motor.frecuencia * this.frasePausa(j)));
       let p = pausa(k); trozos.push(p); dur += p.length / Motor.frecuencia;
-      while (hasta < this.frases.length && dur < 45 && this.memoria.has(hasta)) {
-        const r = this.memoria.get(hasta);
+      // Fragmentos de hasta 5 minutos con lo que ya está generado: con la pantalla bloqueada el iPhone
+      // puede frenar la app, y así depende menos de ella para pasar de un fragmento al siguiente.
+      while (hasta < this.frases.length && dur < 300) {
+        const r = this.memoria.get(hasta) || (this.guardadas.has(hasta) ? await this.leerGuardada(hasta) : null);
+        if (!r || token !== this.token) break;
         inicios.push(dur);
         trozos.push(r.pcm);
         dur += r.seg;
@@ -1429,6 +1444,7 @@ const Rep = {
       const viejo = this.clip && this.clip.url;
       this.clip = { desde: k, hasta, inicios, url: URL.createObjectURL(crearWav(trozos, Motor.frecuencia)) };
       this.reiniciarSiHaceFalta();
+      SesionAudio.reafirmar();
       this.cambiando = true;
       this.esperando = false;
       audio.loop = false;
@@ -1575,6 +1591,7 @@ audio.addEventListener('pause', () => {
   if (Rep.cambiando || Rep.esperando || audio.ended) return;
   if (Rep.sonando && Rep.motor === 'propia' && Rep.clip) { Rep.sonando = false; UI.estadoPlay(); Rep.guardarPos(true); Sesion.estado('paused'); }
 });
+audio.addEventListener('playing', () => SesionAudio.reafirmar());
 audio.addEventListener('play', () => {
   if (!Rep.sonando && Rep.motor === 'propia' && Rep.clip) { Rep.sonando = true; UI.estadoPlay(); Sesion.estado('playing'); }
 });
@@ -1706,7 +1723,7 @@ const Pantalla = {
   },
 };
 document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible' && typeof Dictado !== 'undefined' && !Dictado.rec && !Dictado.grabadora) SesionAudio.soloReproducir();
+  SesionAudio.reafirmar();
   if (document.visibilityState === 'visible' && Rep.sonando) Pantalla.activar();
   if (document.visibilityState === 'visible' && Rep.preparando) { Pantalla.porPreparacion = false; Pantalla.mantenerPorPreparacion(); }
   if (document.visibilityState === 'hidden') Rep.guardarPos(true);
